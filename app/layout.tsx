@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import './globals.css'
 
 export const metadata = {
@@ -11,7 +12,7 @@ export const viewport = {
   maximumScale: 1,
 }
 
-export default function RootLayout({ children }) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body>
