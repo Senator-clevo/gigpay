@@ -67,16 +67,56 @@ export default function CreateJob() {
   }
 
   async function handleSubmit(e) {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
+  e.preventDefault()
+  setLoading(true)
+  setError('')
 
-    // Simulate job creation
-    setTimeout(() => {
-      setPaymentLink(data.paymentLink) // ← REPLACE with actual payment link from API response
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { router.push('/login'); return }
+
+    const { data: profile } = await supabase
+      .from('users').select('*').eq('id', user.id).single()
+
+    const res = await fetch('/api/jobs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: form.title,
+        description: form.description,
+        amount: Number(form.amount),
+        clientName: form.clientName,
+        deadline: form.deadline,
+        workerId: user.id,
+        workerEmail: user.email,
+        workerName: profile?.name || 'Worker'
+      })
+    })
+
+    if (!res.ok) {
+      const text = await res.text()
+      console.error('API error:', text)
+      setError('Server error. Please try again.')
       setLoading(false)
-    }, 2000)
+      return
+    }
+
+    const data = await res.json()
+    console.log('Job creation response:', data)
+
+    if (data.success && data.paymentLink) {
+      setPaymentLink(data.paymentLink)
+    } else {
+      setError(data.error || 'Could not generate payment link. Try again.')
+    }
+
+  } catch (err) {
+    console.error('Submit error:', err)
+    setError('Something went wrong: ' + err.message)
   }
+
+  setLoading(false)
+}
 
   // Success screen
   if (paymentLink) {
