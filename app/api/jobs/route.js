@@ -12,7 +12,7 @@ export async function POST(request) {
 
     // 1. Create gig
     const { data: gig, error } = await supabase
-      .from('gigs')  // ← FIXED table name
+      .from('jobs')  // ← FIXED table name
       .insert({
         worker_id: workerId,
         title,
@@ -39,7 +39,7 @@ export async function POST(request) {
 
     // 3. Save virtual account
     await supabase
-      .from('gigs')
+      .from('jobs')
       .update({
         virtual_account_number: virtualAccount?.data?.account_number,
       })
