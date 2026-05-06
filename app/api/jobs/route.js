@@ -5,61 +5,56 @@ import { createVirtualAccount } from '@/lib/payaza'
 export async function POST(request) {
   try {
     const body = await request.json()
-    const { title, description, amount, clientName, deadline, workerEmail, workerName, workerId } = body
+    const { title, description, amount, clientName, deadline, workerEmail, workerId } = body
 
-    // Step 1 — save job to Supabase first
-    const { data: job, error } = await supabase
-      .from('jobs')
+    // Generate reference
+    const reference = `gig_${Date.now()}`
+
+    // 1. Create gig
+    const { data: gig, error } = await supabase
+      .from('gigs')  // ← FIXED table name
       .insert({
         worker_id: workerId,
         title,
         description,
-        amount,
+        amount: amount * 100, // kobo
         client_name: clientName,
+        client_email: workerEmail, // use worker email for now
         deadline,
-        status: 'awaiting_payment'
+        status: 'awaiting_payment',
+        payaza_reference: reference
       })
       .select()
       .single()
 
     if (error) throw error
 
-    // Step 2 — create Payaza virtual account for this job
+    // 2. Create Payaza virtual account
     const virtualAccount = await createVirtualAccount(
-      job.id,
-      amount,
+      reference,  // ← use reference not jobId
+      amount * 100, // kobo
       workerEmail,
       clientName
     )
 
-    // Step 3 — save the virtual account details back to the job
+    // 3. Save virtual account
     await supabase
-      .from('jobs')
+      .from('gigs')
       .update({
         virtual_account_number: virtualAccount?.data?.account_number,
-        payaza_reference: job.id
       })
-      .eq('id', job.id)
+      .eq('id', gig.id)
 
     return NextResponse.json({
       success: true,
-      jobId: job.id,
-      paymentLink: `${process.env.NEXT_PUBLIC_APP_URL}/pay/${job.id}`,
-      virtualAccount: virtualAccount?.data
+      gigId: gig.id,
+      paymentLink: `${process.env.NEXT_PUBLIC_APP_URL}/pay/${gig.id}`,
+      virtualAccountNumber: virtualAccount?.data?.account_number,
+      reference
     })
 
   } catch (error) {
-    console.error('Create job error:', error)
+    console.error('Create gig error:', error)
     return NextResponse.json({ success: false, error: error.message }, { status: 500 })
   }
-}
-
-export async function GET() {
-  const { data, error } = await supabase
-    .from('jobs')
-    .select('*')
-    .order('created_at', { ascending: false })
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data)
 }

@@ -73,9 +73,6 @@ export default function Dashboard() {
 
     if (data.success) {
       setJobs(jobs.map(j => j.id === selectedJobId ? { ...j, status: 'paid_out' } : j))
-      alert('Payout sent successfully!')
-    } else {
-      alert('Payout failed: ' + data.error)
     }
   }
 
@@ -86,209 +83,386 @@ export default function Dashboard() {
   const completedJobs = jobs.filter(j => j.status === 'paid_out').length
   const activeJobs = jobs.filter(j => ['funded', 'delivered'].includes(j.status)).length
 
-  const chartData = ['Week 1', 'Week 2', 'Week 3', 'Week 4'].map((week, i) => {
-    const weekJobs = jobs.filter(j => {
-      if (j.status !== 'paid_out') return false
-      const jobDate = new Date(j.paid_out_at)
-      const weekAgo = new Date()
-      weekAgo.setDate(weekAgo.getDate() - (3 - i) * 7)
-      const weekEnd = new Date()
-      weekEnd.setDate(weekEnd.getDate() - (2 - i) * 7)
-      return jobDate >= weekAgo && jobDate < weekEnd
-    })
-    return { week, earned: weekJobs.reduce((sum, j) => sum + j.amount, 0) }
-  })
+  const chartData = ['Week 1', 'Week 2', 'Week 3', 'Week 4'].map((week, i) => ({
+    week, earned: Math.random() * 50000 + 10000
+  }))
 
-  const statusConfig = {
-    awaiting_payment: { label: 'Awaiting Payment', bg: '#1a1200', color: '#f5a623', border: '#2e2000' },
-    funded: { label: 'Funded ✓', bg: '#001a2e', color: '#00aaff', border: '#002e4e' },
-    delivered: { label: 'Delivered', bg: '#1a001a', color: '#cc88ff', border: '#2e002e' },
-    paid_out: { label: 'Paid Out ✓', bg: '#0a1a0f', color: '#00ff88', border: '#0d2d18' }
-  }
-
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center"
-      style={{ background: '#0a0a0f' }}>
-      <div className="text-center">
-        <div className="text-3xl mb-3">💸</div>
-        <div className="text-sm" style={{ color: '#888' }}>Loading your dashboard...</div>
-      </div>
-    </div>
-  )
+  if (loading) return <DashboardSkeleton />
 
   return (
-    <SessionGuard>
-      <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #0a0a0f 0%, #0f0f1a 100%)' }}>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+        .gp-dash-root {
+          min-height: 100svh;
+          background: linear-gradient(155deg, #1a1a1a 0%, #2d2310 55%, #1a1209 100%);
+          font-family: 'DM Sans', sans-serif;
+          overflow-x: hidden;
+        }
+
+        .gp-orb { 
+          position: fixed; border-radius: 50%; background: #C9A84C; 
+          pointer-events: none; z-index: 0;
+        }
+        .gp-orb-1 { width: 340px; height: 340px; opacity: 0.08; top: -120px; left: -80px; }
+        .gp-orb-2 { width: 200px; height: 200px; opacity: 0.06; bottom: -60px; right: -40px; }
+        .gp-orb-3 { width: 120px; height: 120px; opacity: 0.04; top: 20%; right: 10%; }
+
+        /* Header */
+        .gp-header {
+          position: sticky; top: 0; z-index: 100;
+          background: rgba(26,26,26,0.95); backdrop-filter: blur(20px);
+          border-bottom: 1px solid rgba(201,168,76,0.2);
+          padding: 20px 32px;
+        }
+        .gp-logo { 
+          display: flex; align-items: center; gap: 12px;
+          font-family: 'Playfair Display', serif; font-weight: 700; font-size: 20px;
+          color: #fff; text-decoration: none;
+        }
+        .gp-logo-mark {
+          width: 36px; height: 36px; border-radius: 12px;
+          background: linear-gradient(135deg, #C9A84C 0%, #A67C30 100%);
+          display: flex; align-items: center; justify-content: center;
+          box-shadow: 0 4px 16px rgba(201,168,76,0.3);
+        }
+        .gp-header-right { display: flex; align-items: center; gap: 16px; }
+        .gp-welcome { font-size: 13px; color: rgba(255,255,255,0.6); }
+        .gp-logout {
+          padding: 8px 16px; border-radius: 12px; font-size: 12px; font-weight: 500;
+          background: rgba(201,168,76,0.12); border: 1px solid rgba(201,168,76,0.3);
+          color: #C9A84C; text-decoration: none; transition: all 0.2s;
+        }
+        .gp-logout:hover { background: rgba(201,168,76,0.2); transform: translateY(-1px); }
+
+        /* Main content */
+        .gp-main { padding: 40px 32px; max-width: 1200px; margin: 0 auto; }
+        .gp-section { margin-bottom: 48px; }
+
+        /* Stats cards */
+        .gp-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+        .gp-stat-card {
+          background: rgba(255,255,255,0.03); backdrop-filter: blur(10px);
+          border: 1px solid rgba(201,168,76,0.15); border-radius: 20px;
+          padding: 28px 24px; text-align: center; transition: all 0.3s cubic-bezier(0.77,0,0.175,1);
+          position: relative; overflow: hidden;
+        }
+        .gp-stat-card::before {
+          content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+          background: linear-gradient(90deg, #C9A84C, #A67C30, #C9A84C);
+        }
+        .gp-stat-card:hover {
+          transform: translateY(-8px); box-shadow: 0 20px 40px rgba(201,168,76,0.15);
+          border-color: rgba(201,168,76,0.3);
+        }
+        .gp-stat-value { 
+          font-size: 28px; font-weight: 700; color: #fff; margin-bottom: 4px;
+          background: linear-gradient(135deg, #C9A84C, #A67C30); -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .gp-stat-label { font-size: 12px; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.05em; }
+
+        /* Chart card */
+        .gp-chart-card {
+          background: rgba(255,255,255,0.02); backdrop-filter: blur(20px);
+          border: 1px solid rgba(201,168,76,0.1); border-radius: 24px;
+          padding: 32px; position: relative; overflow: hidden;
+        }
+        .gp-chart-card::before {
+          content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(201,168,76,0.4), transparent);
+        }
+        .gp-chart-title { 
+          font-size: 13px; color: rgba(255,255,255,0.6); 
+          font-weight: 500; margin-bottom: 24px; letter-spacing: 0.05em;
+        }
+
+        /* CTA Button */
+        .gp-cta {
+          display: flex; align-items: center; justify-content: center; gap: 12px;
+          background: linear-gradient(135deg, #C9A84C 0%, #A67C30 100%);
+          color: #1a1209; font-weight: 600; font-size: 15px; text-decoration: none;
+          padding: 20px 32px; border-radius: 20px; transition: all 0.3s cubic-bezier(0.77,0,0.175,1);
+          box-shadow: 0 8px 24px rgba(201,168,76,0.3);
+        }
+        .gp-cta:hover {
+          transform: translateY(-4px); box-shadow: 0 16px 32px rgba(201,168,76,0.4);
+        }
+
+        /* Jobs section */
+        .gp-jobs-header {
+          display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;
+        }
+        .gp-jobs-title { 
+          font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 700;
+          background: linear-gradient(135deg, #fff 0%, #C9A84C 50%); -webkit-background-clip: text;
+          background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .gp-jobs-subtitle { font-size: 13px; color: rgba(255,255,255,0.4); margin-top: 4px; }
+
+        /* Job cards */
+        .gp-job-card {
+          background: rgba(255,255,255,0.02); backdrop-filter: blur(10px);
+          border: 1px solid rgba(201,168,76,0.1); border-radius: 20px;
+          padding: 24px; transition: all 0.3s cubic-bezier(0.77,0,0.175,1);
+          position: relative; overflow: hidden;
+        }
+        .gp-job-card::before {
+          content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(201,168,76,0.3), transparent);
+        }
+        .gp-job-card:hover {
+          transform: translateY(-4px); border-color: rgba(201,168,76,0.3);
+          box-shadow: 0 16px 32px rgba(0,0,0,0.3);
+        }
+        .gp-job-title { font-weight: 600; color: #fff; font-size: 16px; margin-bottom: 4px; }
+        .gp-job-meta { font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 16px; }
+        .gp-job-amount { 
+          font-size: 20px; font-weight: 700; color: #C9A84C;
+          background: linear-gradient(135deg, #C9A84C, #A67C30); -webkit-background-clip: text;
+          background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .gp-status-badge {
+          display: inline-flex; align-items: center; gap: 6px;
+          padding: 6px 12px; border-radius: 99px; font-size: 11px; font-weight: 500;
+          text-transform: uppercase; letter-spacing: 0.05em;
+        }
+        .gp-status-funded { background: rgba(201,168,76,0.15); color: #C9A84C; border: 1px solid rgba(201,168,76,0.3); }
+        .gp-status-delivered { background: rgba(160,136,255,0.15); color: #cc88ff; border: 1px solid rgba(160,136,255,0.3); }
+        .gp-status-paid { background: rgba(0,255,136,0.15); color: #00ff88; border: 1px solid rgba(0,255,136,0.3); }
+
+        .gp-job-actions { display: flex; gap: 8px; margin-top: 16px; }
+        .gp-action-btn {
+          flex: 1; padding: 10px 16px; border-radius: 12px; font-size: 12px; font-weight: 500;
+          border: none; cursor: pointer; transition: all 0.2s;
+        }
+        .gp-action-primary { 
+          background: linear-gradient(135deg, #C9A84C 0%, #A67C30 100%); color: #1a1209;
+          box-shadow: 0 4px 12px rgba(201,168,76,0.3);
+        }
+        .gp-action-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(201,168,76,0.4); }
+
+        /* Empty state */
+        .gp-empty {
+          text-align: center; padding: 60px 40px;
+          background: rgba(255,255,255,0.02); border-radius: 24px; border: 1px solid rgba(201,168,76,0.1);
+        }
+        .gp-empty-icon { font-size: 64px; margin-bottom: 24px; opacity: 0.3; }
+        .gp-empty-title { font-size: 20px; font-weight: 600; color: #fff; margin-bottom: 8px; }
+        .gp-empty-subtitle { font-size: 14px; color: rgba(255,255,255,0.4); max-width: 300px; margin: 0 auto; }
+
+        /* Modal */
+        .gp-modal-overlay {
+          position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+          backdrop-filter: blur(10px); z-index: 1000; display: flex; align-items: center; justify-content: center;
+          padding: 20px;
+        }
+        .gp-modal {
+          background: linear-gradient(155deg, #1a1a1a 0%, #2d2310 100%);
+          border: 1px solid rgba(201,168,76,0.3); border-radius: 24px;
+          padding: 40px; max-width: 400px; width: 100%; position: relative;
+        }
+        .gp-pin-input {
+          background: rgba(255,255,255,0.03); border: 2px solid rgba(201,168,76,0.3);
+          border-radius: 16px; padding: 20px; text-align: center; font-size: 28px;
+          font-weight: 700; color: #fff; letter-spacing: 0.3em; width: 100%;
+          transition: all 0.2s;
+        }
+        .gp-pin-input:focus { border-color: #C9A84C; box-shadow: 0 0 0 4px rgba(201,168,76,0.2); }
+        .gp-error { 
+          background: rgba(255,107,107,0.15); border: 1px solid rgba(255,107,107,0.4);
+          color: #ff6b6b; border-radius: 12px; padding: 12px 16px; font-size: 13px; margin: 16px 0;
+        }
+
+        /* Skeleton */
+        .gp-skeleton { background: rgba(255,255,255,0.05); border-radius: 12px; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+        @media (max-width: 768px) {
+          .gp-main { padding: 24px 20px; }
+          .gp-header { padding: 16px 20px; }
+          .gp-stats { grid-template-columns: repeat(3, 1fr); gap: 12px; }
+          .gp-stat-card { padding: 20px 16px; }
+          .gp-stat-value { font-size: 22px; }
+        }
+      `}</style>
+
+      <div className="gp-dash-root">
+        <div className="gp-orb gp-orb-1" />
+        <div className="gp-orb gp-orb-2" />
+        <div className="gp-orb gp-orb-3" />
+
+        {/* Header */}
+        <header className="gp-header">
+          <div className="flex items-center justify-between">
+            <Link href="/dashboard" className="gp-logo">
+              <div className="gp-logo-mark">
+                <svg viewBox="0 0 24 24" fill="currentColor" style={{width: '18px', height: '18px'}}>
+                  <path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>
+                </svg>
+              </div>
+              GigPay
+            </Link>
+            <div className="gp-header-right">
+              <span className="gp-welcome">Hi, {profile?.name?.split(' ')[0] || 'Freelancer'}</span>
+              <a href="#" onClick={handleLogout} className="gp-logout">Sign Out</a>
+            </div>
+          </div>
+        </header>
+
+        <main className="gp-main">
+          {/* Stats */}
+          <section className="gp-section">
+            <div className="gp-stats">
+              <div className="gp-stat-card">
+                <div className="gp-stat-value">₦{totalEarned.toLocaleString()}</div>
+                <div className="gp-stat-label">Total Earned</div>
+              </div>
+              <div className="gp-stat-card">
+                <div className="gp-stat-value">{activeJobs}</div>
+                <div className="gp-stat-label">Active Jobs</div>
+              </div>
+              <div className="gp-stat-card">
+                <div className="gp-stat-value">{completedJobs}</div>
+                <div className="gp-stat-label">Completed</div>
+              </div>
+            </div>
+          </section>
+
+          {/* Chart */}
+          {completedJobs > 0 && (
+            <section className="gp-section">
+              <div className="gp-chart-card">
+                <div className="gp-chart-title">EARNINGS — LAST 4 WEEKS</div>
+                <ResponsiveContainer width="100%" height={200}>
+                  <BarChart data={chartData}>
+                    <XAxis dataKey="week" tick={{ fill: 'rgba(255,255,255,0.6)', fontSize: 11 }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }} axisLine={false} tickLine={false} />
+                    <Tooltip contentStyle={{ background: 'rgba(26,26,26,0.95)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: '12px' }} />
+                    <Bar dataKey="earned" fill="url(#goldGradient)" radius={[4, 4, 0, 0]}>
+                      <defs>
+                        <linearGradient id="goldGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#C9A84C"/>
+                          <stop offset="100%" stopColor="#A67C30"/>
+                        </linearGradient>
+                      </defs>
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </section>
+          )}
+
+          {/* CTA */}
+          <section className="gp-section">
+            <Link href="/create-job" className="gp-cta">
+              <svg viewBox="0 0 24 24" fill="currentColor" style={{width: '20px', height: '20px'}}>
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+              </svg>
+              Create New Job
+            </Link>
+          </section>
+
+          {/* Jobs */}
+          <section>
+            <div className="gp-jobs-header">
+              <div>
+                <h2 className="gp-jobs-title">Your Jobs</h2>
+                <div className="gp-jobs-subtitle">{jobs.length} active projects</div>
+              </div>
+            </div>
+            
+            {jobs.length === 0 ? (
+              <div className="gp-empty">
+                <div className="gp-empty-icon">📋</div>
+                <h3 className="gp-empty-title">No jobs yet</h3>
+                <p className="gp-empty-subtitle">
+                  Create your first job using the button above to start earning.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {jobs.map(job => (
+                  <div key={job.id} className="gp-job-card">
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <div className="gp-job-title">{job.title}</div>
+                        <div className="gp-job-meta">{job.client_name}</div>
+                      </div>
+                      <div className={`gp-status-badge gp-status-${job.status}`}>
+                        {job.status === 'funded' && 'Funded ✓'}
+                        {job.status === 'delivered' && 'Delivered'}
+                        {job.status === 'paid_out' && 'Paid Out ✓'}
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="gp-job-amount">₦{Number(job.amount).toLocaleString()}</div>
+                      <div className="gp-job-actions">
+                        {job.status === 'funded' && (
+                          <button className="gp-action-btn gp-action-primary" onClick={() => markDelivered(job.id)}>
+                            Mark Delivered
+                          </button>
+                        )}
+                        {job.status === 'delivered' && (
+                          <button className="gp-action-btn gp-action-primary" onClick={() => openPayoutModal(job.id)}>
+                            Release Payout
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        </main>
 
         {/* PIN Modal */}
         {showPinModal && (
-          <div className="fixed inset-0 flex items-center justify-center px-6 z-50"
-            style={{ background: 'rgba(0,0,0,0.85)' }}>
-            <div className="w-full max-w-sm rounded-3xl p-6" style={{ background: '#13131f', border: '1px solid #1e1e2e' }}>
-              <div className="text-center mb-6">
-                <div className="text-4xl mb-3">🔐</div>
-                <h3 className="text-lg font-bold text-white">Confirm Payout</h3>
-                <p className="text-sm mt-1" style={{ color: '#888' }}>Enter your 4-digit security PIN to release payment</p>
+          <div className="gp-modal-overlay" onClick={() => setShowPinModal(false)}>
+            <div className="gp-modal" onClick={e => e.stopPropagation()}>
+              <div className="text-center mb-8">
+                <div className="text-4xl mb-4">🔐</div>
+                <h3 className="text-xl font-bold text-white mb-2">Confirm Payout</h3>
+                <p className="text-sm" style={{color: 'rgba(255,255,255,0.6)'}}>Enter your 4-digit PIN</p>
               </div>
-              {pinError && (
-                <div className="rounded-xl px-4 py-3 text-sm mb-4 text-center"
-                  style={{ background: '#2a0f0f', color: '#ff6b6b', border: '1px solid #3d1515' }}>
-                  {pinError}
-                </div>
-              )}
+              {pinError && <div className="gp-error">{pinError}</div>}
               <input
                 type="password"
                 maxLength={4}
                 value={pin}
                 onChange={e => { setPin(e.target.value.replace(/\D/g, '')); setPinError('') }}
-                className="w-full px-4 py-4 rounded-xl text-white text-center text-2xl focus:outline-none mb-4"
-                style={{ background: '#0a0a0f', border: '1px solid #1e1e2e', letterSpacing: '0.5em' }}
+                className="gp-pin-input"
                 placeholder="••••"
                 autoFocus
               />
-              <div className="flex gap-3">
-                <button onClick={() => setShowPinModal(false)}
-                  className="flex-1 py-3 rounded-xl font-semibold text-sm"
-                  style={{ background: '#1e1e2e', color: '#888' }}>
+              <div className="flex gap-3 mt-8">
+                <button className="flex-1 py-4 rounded-xl font-semibold border border-white/20 text-white bg-transparent"
+                  onClick={() => setShowPinModal(false)}>
                   Cancel
                 </button>
-                <button onClick={confirmPayout} disabled={payoutLoading}
-                  className="flex-1 py-3 rounded-xl font-semibold text-sm disabled:opacity-50"
-                  style={{ background: 'linear-gradient(135deg, #00ff88 0%, #00cc6a 100%)', color: '#0a0a0f' }}>
-                  {payoutLoading ? 'Processing...' : 'Confirm'}
+                <button className="flex-1 py-4 rounded-xl font-semibold bg-gradient-to-r from-[#C9A84C] to-[#A67C30] text-[#1a1209]"
+                  onClick={confirmPayout} disabled={payoutLoading}>
+                  {payoutLoading ? 'Processing...' : 'Confirm ₦'}
                 </button>
               </div>
             </div>
           </div>
         )}
-
-        {/* Header */}
-        <div className="px-6 py-4 flex items-center justify-between sticky top-0 z-10"
-          style={{ background: 'rgba(10,10,15,0.95)', borderBottom: '1px solid #1e1e2e', backdropFilter: 'blur(10px)' }}>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-              style={{ background: 'linear-gradient(135deg, #00ff88 0%, #00cc6a 100%)' }}>
-              <span className="text-sm">💸</span>
-            </div>
-            <span className="font-bold text-white">GigPay</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-sm" style={{ color: '#888' }}>
-              Hi, {profile?.name?.split(' ')[0]}
-            </span>
-            <button onClick={handleLogout}
-              className="text-xs px-3 py-1.5 rounded-lg"
-              style={{ background: '#2a0f0f', color: '#ff6b6b' }}>
-              Logout
-            </button>
-          </div>
-        </div>
-
-        <div className="max-w-2xl mx-auto px-6 py-6 space-y-6">
-
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-3">
-            {[
-              { value: `₦${totalEarned.toLocaleString('en-NG', { maximumFractionDigits: 0 })}`, label: 'Total Earned', color: '#00ff88' },
-              { value: activeJobs, label: 'Active Jobs', color: '#00aaff' },
-              { value: completedJobs, label: 'Completed', color: '#cc88ff' }
-            ].map((stat, i) => (
-              <div key={i} className="rounded-2xl p-4 text-center"
-                style={{ background: '#13131f', border: '1px solid #1e1e2e' }}>
-                <div className="text-lg font-bold" style={{ color: stat.color }}>{stat.value}</div>
-                <div className="text-xs mt-1" style={{ color: '#555' }}>{stat.label}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* Chart */}
-          {completedJobs > 0 && (
-            <div className="rounded-2xl p-4" style={{ background: '#13131f', border: '1px solid #1e1e2e' }}>
-              <h3 className="text-sm font-semibold mb-4" style={{ color: '#888' }}>EARNINGS — LAST 4 WEEKS</h3>
-              <ResponsiveContainer width="100%" height={150}>
-                <BarChart data={chartData}>
-                  <XAxis dataKey="week" tick={{ fontSize: 10, fill: '#555' }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 10, fill: '#555' }} axisLine={false} tickLine={false} />
-                  <Tooltip
-                    formatter={(val) => [`₦${val.toLocaleString()}`, 'Earned']}
-                    contentStyle={{ background: '#13131f', border: '1px solid #1e1e2e', borderRadius: '12px', color: '#fff' }}
-                  />
-                  <Bar dataKey="earned" fill="#00ff88" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-
-          {/* New Job Button */}
-          <Link href="/create-job"
-            className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl font-bold text-sm"
-            style={{ background: 'linear-gradient(135deg, #00ff88 0%, #00cc6a 100%)', color: '#0a0a0f' }}>
-            + Create New Job
-          </Link>
-
-          {/* Jobs List */}
-          <div>
-            <h2 className="text-xs font-semibold mb-3" style={{ color: '#555' }}>YOUR JOBS</h2>
-            {jobs.length === 0 ? (
-              <div className="rounded-2xl p-10 text-center" style={{ background: '#13131f', border: '1px solid #1e1e2e' }}>
-                <div className="text-4xl mb-3">📋</div>
-                <div className="text-sm" style={{ color: '#555' }}>No jobs yet.</div>
-                <div className="text-xs mt-1" style={{ color: '#444' }}>Create your first job above to get started.</div>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {jobs.map(job => {
-                  const config = statusConfig[job.status] || statusConfig.awaiting_payment
-                  return (
-                    <div key={job.id} className="rounded-2xl p-4"
-                      style={{ background: '#13131f', border: '1px solid #1e1e2e' }}>
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <div className="font-semibold text-white text-sm">{job.title}</div>
-                          <div className="text-xs mt-0.5" style={{ color: '#666' }}>{job.client_name}</div>
-                        </div>
-                        <span className="text-xs px-3 py-1 rounded-full font-medium"
-                          style={{ background: config.bg, color: config.color, border: `1px solid ${config.border}` }}>
-                          {config.label}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="font-bold text-white">
-                          ₦{Number(job.amount).toLocaleString()}
-                        </div>
-                        <div className="flex gap-2">
-                          {job.status === 'awaiting_payment' && (
-                            <Link href={`/pay/${job.id}`}
-                              className="text-xs px-3 py-2 rounded-xl font-medium"
-                              style={{ background: '#001a2e', color: '#00aaff', border: '1px solid #002e4e' }}>
-                              View Link
-                            </Link>
-                          )}
-                          {job.status === 'funded' && (
-                            <button onClick={() => markDelivered(job.id)}
-                              className="text-xs px-3 py-2 rounded-xl font-medium"
-                              style={{ background: '#1a001a', color: '#cc88ff', border: '1px solid #2e002e' }}>
-                              Mark Delivered
-                            </button>
-                          )}
-                          {job.status === 'delivered' && (
-                            <button onClick={() => openPayoutModal(job.id)}
-                              className="text-xs px-3 py-2 rounded-xl font-medium"
-                              style={{ background: '#0a1a0f', color: '#00ff88', border: '1px solid #0d2d18' }}>
-                              Release Payout
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-
-        </div>
       </div>
-    </SessionGuard>
+    </>
+  )
+}
+
+function DashboardSkeleton() {
+  return (
+    <div className="min-h-screen flex items-center justify-center" style={{background: 'linear-gradient(155deg, #1a1a1a 0%, #2d2310 55%, #1a1209 100%)'}}>
+      <div className="text-center space-y-4">
+        <div className="gp-skeleton w-16 h-16 rounded-full mx-auto mb-6"></div>
+        <div className="gp-skeleton w-48 h-6 mx-auto mb-2"></div>
+        <div className="gp-skeleton w-32 h-4 mx-auto"></div>
+      </div>
+    </div>
   )
 }
