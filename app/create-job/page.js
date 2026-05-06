@@ -73,7 +73,7 @@ export default function CreateJob() {
 
     // Simulate job creation
     setTimeout(() => {
-      setPaymentLink('https://pay.gigpay.app/job/abc123')
+      setPaymentLink(data.paymentLink) // ← REPLACE with actual payment link from API response
       setLoading(false)
     }, 2000)
   }
