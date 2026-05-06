@@ -58,9 +58,15 @@ export default function Signup() {
     setError('')
 
     const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: form.email,
-      password: form.password
-    })
+  email: form.email,
+  password: form.password,
+  options: {
+    emailRedirectTo: null,
+    data: {
+      name: form.name
+    }
+  }
+})
     if (authError) { setError(authError.message); setLoading(false); return }
 
     const { error: profileError } = await supabase.from('users').insert({
