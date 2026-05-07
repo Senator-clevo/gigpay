@@ -53,35 +53,51 @@ export default function PayPage() {
     }
   }
 
-  function handlePayWithPayaza() {
-    if (!job) return
-    setPaying(true)
+  
+function handlePayWithPayaza() {
+  if (!job) return
+  setPaying(true)
 
-    try {
-      const reference = `${job.id}_${Date.now()}`
-      const callbackUrl = `${window.location.origin}/pay/${job.id}?paid=true`
+  try {
+    const reference = `${job.id}_${Date.now()}`
+    const callbackUrl = `${window.location.origin}/pay/${job.id}?paid=true`
 
-      const params = new URLSearchParams({
-        merchant_key: 'PZ78-PKTEST-93987866-9EF7-4D96-8BF2-9F1EF818286C',
-        amount: Number(job.amount),
-        currency: 'NGN',
-        email: 'client@gigpay.app',
-        first_name: job.client_name?.split(' ')[0] || 'Client',
-        last_name: job.client_name?.split(' ')[1] || 'User',
-        reference: reference,
-        description: job.title,
-        callback_url: callbackUrl
-      })
+    // Make sure amount is in Naira not kobo
+    const amountInNaira = Number(job.amount) > 100000000 
+      ? Number(job.amount) / 100  // divide if accidentally in kobo
+      : Number(job.amount)
 
-      window.location.href = `https://checkout.payaza.africa/?${params.toString()}`
+    const params = new URLSearchParams({
+      merchant_key: 'PZ78-PKTEST-93987866-9EF7-4D96-8BF2-9F1EF818286C',
+      amount: amountInNaira,
+      currency: 'NGN',
+      email: 'client@gigpay.app',
+      first_name: job.client_name?.split(' ')[0] || 'Client',
+      last_name: job.client_name?.split(' ')[1] || 'User',
+      reference: reference,
+      description: job.title,
+      callback_url: callbackUrl
+    })
 
-    } catch (err) {
-      console.error('Checkout error:', err)
-      setPaying(false)
-      alert('Could not open payment. Please try again.')
+    const checkoutUrl = `https://checkout.payaza.africa/?${params.toString()}`
+    console.log('Opening checkout:', checkoutUrl)
+
+    // Open in new tab to avoid frame blocking
+    const newTab = window.open(checkoutUrl, '_blank')
+    
+    if (!newTab) {
+      // If popup blocked, redirect in same tab
+      window.location.href = checkoutUrl
     }
-  }
 
+    setPaying(false)
+
+  } catch (err) {
+    console.error('Checkout error:', err)
+    setPaying(false)
+    alert('Could not open payment. Please try again.')
+  }
+}
   if (loading) return (
     <div style={{
       minHeight: '100svh',
