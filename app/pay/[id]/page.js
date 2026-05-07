@@ -16,15 +16,12 @@ function PayInner() {
   const [paying, setPaying] = useState(false)
 
   useEffect(() => {
-  if (!id) return
-  console.log('Supabase URL set:', !!process.env.NEXT_PUBLIC_SUPABASE_URL)  // ADD THIS
-  console.log('Payaza key set:', !!process.env.NEXT_PUBLIC_PAYAZA_PUBLIC_KEY)  // ADD THIS
-  if (searchParams.get('paid') === 'true') setPaid(true)
-  loadJob()
-}, [id])
-
-  console.log('Supabase URL set:', !!process.env.NEXT_PUBLIC_SUPABASE_URL)
-
+    if (!id) return
+    console.log('Supabase URL set:', !!process.env.NEXT_PUBLIC_SUPABASE_URL)
+    console.log('Key:', process.env.NEXT_PUBLIC_PAYAZA_PUBLIC_KEY)
+    if (searchParams.get('paid') === 'true') setPaid(true)
+    loadJob()
+  }, [id])
 
   async function loadJob() {
     try {
@@ -44,55 +41,72 @@ function PayInner() {
   }
 
   async function handlePayWithPayaza() {
-  console.log('Key:', process.env.NEXT_PUBLIC_PAYAZA_PUBLIC_KEY)
-  console.log('Job:', job)
-  if (!job || paying) return
-  setPaying(true)
+    console.log('Starting Payaza payment...')
+    console.log('Key:', process.env.NEXT_PUBLIC_PAYAZA_PUBLIC_KEY)
+    console.log('Job:', job)
+    if (!job || paying) return
+    setPaying(true)
 
-  try {
-    // Load Payaza script dynamically if not already loaded
-    await new Promise((resolve, reject) => {
-      if (window.PayazaCheckout) { resolve(); return }
-      const script = document.createElement('script')
-      script.src = 'https://cdn.payaza.africa/checkout/payaza-checkout.js'
-      script.onload = resolve
-      script.onerror = reject
-      document.head.appendChild(script)
-    })
-
-    window.PayazaCheckout.init({
-      merchant_key: process.env.NEXT_PUBLIC_PAYAZA_PUBLIC_KEY,
-      connection_mode: 'test',
-      checkout_amount: Number(job.amount),
-      currency_code: 'NGN',
-      email_address: job.client_email || 'client@gigpay.app',
-      phone_number: '08000000000',
-      first_name: (job.client_name || 'Client').split(' ')[0],
-      last_name: (job.client_name || 'User').split(' ')[1] || 'User',
-      transaction_reference: job.payaza_reference || job.id,
-      onClose: function() {
-        console.log('Payaza closed')
-        setPaying(false)
-      },
-      callback: function(response) {
-        console.log('Payaza response:', response)
-        if (
-          response?.status === 'successful' ||
-          response?.status === 'SUCCESSFUL' ||
-          response?.transaction_status === 'Funds Received'
-        ) {
-          setPaid(true)
+    try {
+      // Load Payaza script dynamically if not already loaded
+      await new Promise((resolve, reject) => {
+        if (window.PayazaCheckout) { 
+          console.log('Payaza SDK already loaded')
+          resolve()
+          return 
         }
-        setPaying(false)
-      }
-    })
+        console.log('Loading Payaza SDK...')
+        const script = document.createElement('script')
+        script.src = 'https://cdn.payaza.africa/checkout/payaza-checkout.js'
+        script.onload = () => {
+          console.log('Payaza SDK loaded successfully')
+          resolve()
+        }
+        script.onerror = () => {
+          console.error('Failed to load Payaza SDK')
+          reject(new Error('Failed to load Payaza SDK'))
+        }
+        document.head.appendChild(script)
+      })
 
-  } catch (err) {
-    console.error('Payaza error:', err)
-    setPaying(false)
-    alert('Payment error: ' + err.message)
+      // ✅ FIXED: Use correct Payaza SDK methods
+      console.log('Setting up Payaza checkout...')
+      
+      window.PayazaCheckout.setup({
+        key: process.env.NEXT_PUBLIC_PAYAZA_PUBLIC_KEY,
+        customer: {
+          email: job.client_email || 'client@gigpay.app',
+          name: job.client_name || 'Client',
+          phone_number: '08000000000'
+        },
+        amount: Number(job.amount),
+        currency: 'NGN',
+        reference: job.payaza_reference || job.id,
+        onClose: function() {
+          console.log('Payaza checkout closed')
+          setPaying(false)
+        },
+        onSuccess: function(response) {
+          console.log('Payaza payment successful:', response)
+          setPaid(true)
+          setPaying(false)
+        },
+        onError: function(error) {
+          console.error('Payaza payment error:', error)
+          setPaying(false)
+          alert('Payment failed: ' + (error?.message || 'Unknown error'))
+        }
+      })
+
+      console.log('Opening Payaza iframe...')
+      window.PayazaCheckout.openIframe()
+
+    } catch (err) {
+      console.error('Payaza checkout error:', err)
+      setPaying(false)
+      alert('Payment setup error: ' + err.message)
+    }
   }
-}
 
   const displayAmount = job ? Number(job.amount) : 0
 

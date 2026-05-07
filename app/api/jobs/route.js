@@ -12,14 +12,14 @@ export async function POST(request) {
 
     // 1. Create gig
     const { data: gig, error } = await supabase
-      .from('jobs')  // ← FIXED table name
+      .from('jobs')
       .insert({
         worker_id: workerId,
         title,
         description,
-        amount: amount, // store in Naira
+        amount: amount,
         client_name: clientName,
-        client_email: workerEmail, // use worker email for now
+        client_email: workerEmail,
         deadline,
         status: 'awaiting_payment',
         payaza_reference: reference
@@ -31,8 +31,8 @@ export async function POST(request) {
 
     // 2. Create Payaza virtual account
     const virtualAccount = await createVirtualAccount(
-      reference,  // ← use reference not jobId
-      amount * 100, // convert to kobo for Payaza
+      reference,
+      amount,
       workerEmail,
       clientName
     )

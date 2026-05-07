@@ -1,10 +1,28 @@
 import { NextResponse } from 'next/server'
 import { createServerSupabase } from '@/lib/supabase-server'
+import crypto from 'crypto'
 
 export async function POST(request) {
   try {
     const body = await request.json()
     console.log('Webhook received:', JSON.stringify(body))
+
+    // ✅ Validate HMAC signature to prevent fake webhooks
+    const signature = request.headers.get('x-payaza-signature')
+    if (signature) {
+      const secretKey = process.env.PAYAZA_SECRET_KEY
+      const payload = JSON.stringify(body)
+      
+      const computedSignature = crypto
+        .createHmac('sha512', secretKey)
+        .update(payload, 'utf8')
+        .digest('base64')
+      
+      if (computedSignature !== signature) {
+        console.error('Webhook signature mismatch. Possible fake webhook.')
+        return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+      }
+    }
 
     const supabase = createServerSupabase()
 
