@@ -42,15 +42,30 @@ async function handlePayWithPayaza() {
   if (!job || paying) return
   setPaying(true)
 
-  try {
-    const PayazaCheckout = (await import('@payaza/web-sdk')).default
+  const existingScript = document.getElementById('payaza-bundle')
+  if (existingScript) existingScript.remove()
 
-    const checkout = PayazaCheckout.setup({
+  const script = document.createElement('script')
+  script.id = 'payaza-bundle'
+  script.src = 'https://checkout.payaza.africa/js/v1/bundle.js'
+  script.defer = true
+
+  script.onload = function() {
+    console.log('Payaza bundle loaded, PayazaCheckout:', typeof window.PayazaCheckout)
+    
+    if (!window.PayazaCheckout) {
+      setPaying(false)
+      alert('PayazaCheckout not available')
+      return
+    }
+
+    const payazaCheckout = window.PayazaCheckout.setup({
       merchant_key: 'PZ78-PKTEST-93987866-9EF7-4D96-8BF2-9F1EF818286C',
-      connection_mode: PayazaCheckout.TEST_CONNECTION_MODE,
+      connection_mode: window.PayazaCheckout.TEST_CONNECTION_MODE,
       checkout_amount: Number(job.amount),
       currency_code: 'NGN',
       email_address: job.client_email || 'client@gigpay.app',
+      phone_number: '08000000000',
       first_name: (job.client_name || 'Client').split(' ')[0],
       last_name: (job.client_name || 'User').split(' ')[1] || 'User',
       transaction_reference: job.payaza_reference || job.id,
@@ -58,12 +73,12 @@ async function handlePayWithPayaza() {
         console.log('Checkout closed')
         setPaying(false)
       },
-      callback: function(response) {
-        console.log('Payaza callback:', response)
+      callback: function(callbackResponse) {
+        console.log('Payaza callback:', callbackResponse)
         if (
-          response?.status === 'successful' ||
-          response?.status === 'SUCCESSFUL' ||
-          response?.transaction_status === 'Funds Received'
+          callbackResponse?.status === 'successful' ||
+          callbackResponse?.status === 'SUCCESSFUL' ||
+          callbackResponse?.transaction_status === 'Funds Received'
         ) {
           setPaid(true)
         }
@@ -71,16 +86,17 @@ async function handlePayWithPayaza() {
       }
     })
 
-    checkout.showPopup()
-
-  } catch (err) {
-    console.error('Payaza SDK error:', err)
-    setPaying(false)
-    alert('Payment error: ' + err.message)
+    payazaCheckout.showPopup()
   }
+
+  script.onerror = function(e) {
+    console.error('Failed to load Payaza bundle:', e)
+    setPaying(false)
+    alert('Payment gateway failed to load. Please check your connection and try again.')
+  }
+
+  document.head.appendChild(script)
 }
-
-
   const displayAmount = job ? Number(job.amount) : 0
 
   if (loading) {
