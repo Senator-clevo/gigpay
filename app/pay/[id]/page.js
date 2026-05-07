@@ -42,7 +42,7 @@ function PayInner() {
     if (!job || paying) return
     setPaying(true)
 
-    const amount = job.amount * 100 // kobo
+    const amount = job.amount // in Naira
     const email = job.client_email || 'client@gigpay.app'
     const firstName = (job.client_name || 'Client').split(' ')[0]
     const lastName = (job.client_name || 'User').split(' ')[1] || 'User'
