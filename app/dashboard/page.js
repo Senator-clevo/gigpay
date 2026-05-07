@@ -19,11 +19,7 @@ export default function Dashboard() {
   const [pinError, setPinError] = useState('')
 
   useEffect(() => {
-    if (!id) return
-  console.log('Supabase URL set:', !!process.env.NEXT_PUBLIC_SUPABASE_URL)  // ADD THIS
-  console.log('Payaza key set:', !!process.env.NEXT_PUBLIC_PAYAZA_PUBLIC_KEY)  // ADD THIS
-  if (searchParams.get('paid') === 'true') setPaid(true)
-  loadJob()
+  
     async function loadData() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
@@ -41,7 +37,7 @@ export default function Dashboard() {
       setLoading(false)
     }
     loadData()
-  }, [id])
+  }, [])
 
   async function handleLogout() {
     await supabase.auth.signOut()

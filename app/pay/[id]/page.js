@@ -16,10 +16,12 @@ function PayInner() {
   const [paying, setPaying] = useState(false)
 
   useEffect(() => {
-    if (!id) return
-    if (searchParams.get('paid') === 'true') setPaid(true)
-    loadJob()
-  }, [id])
+  if (!id) return
+  console.log('Supabase URL set:', !!process.env.NEXT_PUBLIC_SUPABASE_URL)  // ADD THIS
+  console.log('Payaza key set:', !!process.env.NEXT_PUBLIC_PAYAZA_PUBLIC_KEY)  // ADD THIS
+  if (searchParams.get('paid') === 'true') setPaid(true)
+  loadJob()
+}, [id])
 
   console.log('Supabase URL set:', !!process.env.NEXT_PUBLIC_SUPABASE_URL)
 
