@@ -49,44 +49,71 @@ export default function PayPage() {
   }
 
   function handlePayWithPayaza() {
-    if (!job) return
-    setPaying(true)
+  if (!job) return
+  setPaying(true)
 
-    const script = document.createElement('script')
-    script.src = 'https://js.payaza.africa/inline.js'
-    script.onload = () => {
+  // Remove any existing Payaza script
+  const existingScript = document.getElementById('payaza-script')
+  if (existingScript) existingScript.remove()
+
+  const script = document.createElement('script')
+  script.id = 'payaza-script'
+  script.src = 'https://js.payaza.africa/inline.js'
+  script.async = true
+
+  script.onload = () => {
+    console.log('Payaza script loaded, window.PayazaCheckout:', window.PayazaCheckout)
+    
+    // Give it a moment to initialize
+    setTimeout(() => {
       try {
+        if (!window.PayazaCheckout) {
+          throw new Error('PayazaCheckout not found on window')
+        }
+
         window.PayazaCheckout.init({
-          merchant_key: process.env.NEXT_PUBLIC_PAYAZA_PUBLIC_KEY,
-          amount: job.amount,
+          merchant_key: 'PZ78-PKTEST-93987866-9EF7-4D96-8BF2-9F1EF818286C',
+          amount: Number(job.amount),
           currency_code: 'NGN',
           email: 'client@gigpay.app',
           first_name: job.client_name?.split(' ')[0] || 'Client',
           last_name: job.client_name?.split(' ')[1] || 'User',
-          reference: job.payaza_reference || job.id,
+          reference: `${job.id}_${Date.now()}`,
           description: job.title,
+          onClose: function() {
+            console.log('Payaza checkout closed')
+            setPaying(false)
+          },
           callback: function(response) {
-            console.log('Payaza response:', response)
-            if (response.status === 'successful' || response.status === 'success') {
+            console.log('Payaza payment response:', response)
+            if (
+              response.status === 'successful' ||
+              response.status === 'success' ||
+              response.statusCode === '00' ||
+              response.data?.status === 'successful'
+            ) {
               setPaid(true)
             }
             setPaying(false)
-          },
-          onClose: function() {
-            setPaying(false)
           }
         })
+
       } catch (err) {
-        console.error('Payaza checkout error:', err)
+        console.error('Payaza init error:', err)
         setPaying(false)
+        alert('Payment could not open. Error: ' + err.message)
       }
-    }
-    script.onerror = () => {
-      console.error('Failed to load Payaza script')
-      setPaying(false)
-    }
-    document.head.appendChild(script)
+    }, 500)
   }
+
+  script.onerror = (e) => {
+    console.error('Payaza script failed to load:', e)
+    setPaying(false)
+    alert('Payment gateway failed to load. Check your internet connection.')
+  }
+
+  document.body.appendChild(script)
+}
 
   if (loading) return (
     <div style={{
