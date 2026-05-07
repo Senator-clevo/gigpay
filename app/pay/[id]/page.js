@@ -44,63 +44,55 @@ function PayInner() {
   }
 
   async function handlePayWithPayaza() {
-    if (!job || paying) return
-    setPaying(true)
+  console.log('Key:', process.env.NEXT_PUBLIC_PAYAZA_PUBLIC_KEY)
+  console.log('Job:', job)
+  if (!job || paying) return
+  setPaying(true)
 
-    try {
-      const module = await import('@payaza/web-sdk')
-      const PayazaCheckout = module.default || module.PayazaCheckout
+  try {
+    // Load Payaza script dynamically if not already loaded
+    await new Promise((resolve, reject) => {
+      if (window.PayazaCheckout) { resolve(); return }
+      const script = document.createElement('script')
+      script.src = 'https://cdn.payaza.africa/checkout/payaza-checkout.js'
+      script.onload = resolve
+      script.onerror = reject
+      document.head.appendChild(script)
+    })
 
-      console.log('Module keys:', Object.keys(module))
-      console.log('PayazaCheckout type:', typeof PayazaCheckout)
-
-      const data = {
-        merchant_key: process.env.NEXT_PUBLIC_PAYAZA_PUBLIC_KEY,
-        connection_mode: 'test',
-        checkout_amount: Number(job.amount),
-        currency_code: 'NGN',
-        email_address: job.client_email || 'client@gigpay.app',
-        phone_number: '08000000000',
-        first_name: (job.client_name || 'Client').split(' ')[0],
-        last_name: (job.client_name || 'User').split(' ')[1] || 'User',
-        transaction_reference: job.payaza_reference || job.id,
-        onClose: function() {
-          console.log('Closed')
-          setPaying(false)
-        },
-        callback: function(callbackResponse) {
-          console.log('Payaza callback:', callbackResponse)
-          if (
-            callbackResponse?.status === 'successful' ||
-            callbackResponse?.status === 'SUCCESSFUL' ||
-            callbackResponse?.transaction_status === 'Funds Received'
-          ) {
-            setPaid(true)
-          }
-          setPaying(false)
+    window.PayazaCheckout.init({
+      merchant_key: process.env.NEXT_PUBLIC_PAYAZA_PUBLIC_KEY,
+      connection_mode: 'test',
+      checkout_amount: Number(job.amount),
+      currency_code: 'NGN',
+      email_address: job.client_email || 'client@gigpay.app',
+      phone_number: '08000000000',
+      first_name: (job.client_name || 'Client').split(' ')[0],
+      last_name: (job.client_name || 'User').split(' ')[1] || 'User',
+      transaction_reference: job.payaza_reference || job.id,
+      onClose: function() {
+        console.log('Payaza closed')
+        setPaying(false)
+      },
+      callback: function(response) {
+        console.log('Payaza response:', response)
+        if (
+          response?.status === 'successful' ||
+          response?.status === 'SUCCESSFUL' ||
+          response?.transaction_status === 'Funds Received'
+        ) {
+          setPaid(true)
         }
+        setPaying(false)
       }
+    })
 
-      let checkout
-      if (typeof PayazaCheckout === 'function') {
-        checkout = new PayazaCheckout(data)
-      } else if (PayazaCheckout && typeof PayazaCheckout.setup === 'function') {
-        checkout = PayazaCheckout.setup(data)
-      } else if (module.setup && typeof module.setup === 'function') {
-        checkout = module.setup(data)
-      } else {
-        throw new Error('Cannot find PayazaCheckout. Keys: ' + Object.keys(module).join(', '))
-      }
-
-      console.log('Checkout instance created, calling showPopup')
-      checkout.showPopup()
-
-    } catch (err) {
-      console.error('Payaza error:', err)
-      setPaying(false)
-      alert('Payment error: ' + err.message)
-    }
+  } catch (err) {
+    console.error('Payaza error:', err)
+    setPaying(false)
+    alert('Payment error: ' + err.message)
   }
+}
 
   const displayAmount = job ? Number(job.amount) : 0
 
@@ -222,7 +214,7 @@ function PayInner() {
             letterSpacing: '0.05em'
           }}
         >
-          {paying ? 'Opening Payaza checkout…' : 'Pay ₦' + displayAmount.toLocaleString() + ' Now'}
+          {paying ? 'Loading Payaza...' : 'Pay ₦' + displayAmount.toLocaleString() + ' Now'}
         </button>
 
         {job.virtual_account_number && (
