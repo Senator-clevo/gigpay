@@ -13,7 +13,7 @@ function PayInner() {
   const [worker, setWorker] = useState(null)
   const [loading, setLoading] = useState(true)
   const [paid, setPaid] = useState(false)
-  const [checkoutUrl, setCheckoutUrl] = useState(null)
+  const [paying, setPaying] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -38,23 +38,49 @@ function PayInner() {
     }
   }
 
-  function generateCheckout() {
-    if (!job) return
-    const ref = job.id + '_' + Date.now()
-    const cb = 'https://gigpay-one.vercel.app/pay/' + job.id + '?paid=true'
-    const p = new URLSearchParams({
-      merchant_key: 'PZ78-PKTEST-93987866-9EF7-4D96-8BF2-9F1EF818286C',
-      amount: String(Number(job.amount)),
-      currency: 'NGN',
-      email: 'client@gigpay.app',
-      first_name: (job.client_name || 'Client').split(' ')[0],
-      last_name: (job.client_name || 'User').split(' ')[1] || 'User',
-      reference: ref,
-      description: job.title,
-      callback_url: cb
-    })
-    setCheckoutUrl('https://checkout.payaza.africa/?' + p.toString())
+  function handlePayWithPayaza() {
+    if (!job || paying) return
+    setPaying(true)
+
+    const script = document.createElement('script')
+    script.src = 'https://js.payaza.africa/inline.js'
+    script.async = true
+    script.onload = () => {
+      const shouldUseCheckout = window.PayazaCheckout && typeof window.PayazaCheckout.init === 'function'
+      if (!shouldUseCheckout) {
+        console.error('Payaza checkout script did not expose PayazaCheckout')
+        setPaying(false)
+        return
+      }
+
+      const amount = Number(job.amount) / 100
+
+      window.PayazaCheckout.init({
+        merchant_key: process.env.NEXT_PUBLIC_PAYAZA_PUBLIC_KEY || 'PZ78-PKTEST-93987866-9EF7-4D96-8BF2-9F1EF818286C',
+        amount,
+        currency_code: 'NGN',
+        email: job.client_email || 'client@gigpay.app',
+        first_name: (job.client_name || 'Client').split(' ')[0],
+        last_name: (job.client_name || 'User').split(' ')[1] || 'User',
+        reference: job.payaza_reference || job.id,
+        description: job.title,
+        callback(response) {
+          setPaying(false)
+          if (response?.status === 'successful' || response?.status === 'SUCCESSFUL') {
+            setPaid(true)
+          }
+        }
+      })
+    }
+    script.onerror = () => {
+      console.error('Failed to load Payaza checkout script')
+      setPaying(false)
+    }
+
+    document.head.appendChild(script)
   }
+
+  const displayAmount = job ? Number(job.amount) / 100 : 0
 
   if (loading) {
     return (
@@ -87,13 +113,13 @@ function PayInner() {
           <h2 style={{ color: '#fff', fontSize: '26px', margin: '16px 0 12px' }}>{'Payment Confirmed!'}</h2>
           <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14px', lineHeight: 1.6, marginBottom: '24px' }}>
             {'Your payment of '}
-            <strong style={{ color: '#00ff88' }}>{'₦' + Number(job.amount).toLocaleString()}</strong>
+            <strong style={{ color: '#00ff88' }}>{'₦' + displayAmount.toLocaleString()}</strong>
             {' is secured in escrow and will be released to ' + (worker ? worker.name : 'the freelancer') + ' on delivery.'}
           </p>
           <div style={{ background: 'rgba(0,255,136,0.08)', border: '1px solid rgba(0,255,136,0.15)', borderRadius: '16px', padding: '16px' }}>
             {[
               { label: 'Job', value: job.title },
-              { label: 'Amount', value: '₦' + Number(job.amount).toLocaleString() },
+              { label: 'Amount', value: '₦' + displayAmount.toLocaleString() },
               { label: 'Freelancer', value: worker ? worker.name : '-' },
               { label: 'Status', value: '🔒 Secured in escrow' },
             ].map(function(row, i) {
@@ -146,7 +172,7 @@ function PayInner() {
 
         <div style={{ textAlign: 'center', marginBottom: '20px' }}>
           <div style={{ fontSize: 'clamp(32px,8vw,46px)', fontWeight: 800, background: GOLD, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-            {'₦' + Number(job.amount).toLocaleString()}
+            {'₦' + displayAmount.toLocaleString()}
           </div>
           <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>
             {'🔒 Secured in escrow by Payaza'}
@@ -157,54 +183,33 @@ function PayInner() {
           {'🛡️ Your money is held safely until delivery. Zero risk.'}
         </div>
 
-        {checkoutUrl === null && (
-          <button
-            onClick={generateCheckout}
-            style={{ width: '100%', background: GOLD, color: '#1a1209', border: 'none', borderRadius: '20px', padding: '20px', fontSize: '16px', fontWeight: 700, cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.05em' }}
-          >
-            {'Pay ₦' + Number(job.amount).toLocaleString() + ' Now'}
-          </button>
-        )}
+        <button
+          onClick={handlePayWithPayaza}
+          disabled={paying}
+          style={{
+            width: '100%',
+            background: paying ? 'rgba(201,168,76,0.35)' : GOLD,
+            color: '#1a1209',
+            border: 'none',
+            borderRadius: '20px',
+            padding: '20px',
+            fontSize: '16px',
+            fontWeight: 700,
+            cursor: paying ? 'not-allowed' : 'pointer',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em'
+          }}
+        >
+          {paying ? 'Opening Payaza checkout…' : `Pay ₦${displayAmount.toLocaleString()} Now`}
+        </button>
 
-        {checkoutUrl !== null && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <a
-              href={checkoutUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'block',
-                width: '100%',
-                background: GOLD,
-                color: '#1a1209',
-                borderRadius: '20px',
-                padding: '20px',
-                fontSize: '16px',
-                fontWeight: 700,
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                textAlign: 'center',
-                textDecoration: 'none',
-                boxSizing: 'border-box'
-              }}
-            >
-              {'🔗 Tap here to pay'}
-            </a>
-            <button
-              onClick={function() { setCheckoutUrl(null) }}
-              style={{
-                width: '100%',
-                background: 'transparent',
-                border: '1px solid rgba(201,168,76,0.25)',
-                color: 'rgba(255,255,255,0.4)',
-                borderRadius: '14px',
-                padding: '12px',
-                fontSize: '13px',
-                cursor: 'pointer'
-              }}
-            >
-              {'← Go back'}
-            </button>
+        {job.virtual_account_number && (
+          <div style={{ marginTop: '20px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(201,168,76,0.1)', borderRadius: '18px', padding: '18px', color: '#fff' }}>
+            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', marginBottom: '8px' }}>Payaza virtual account</div>
+            <div style={{ fontSize: '16px', fontWeight: 700, marginBottom: '6px' }}>{job.virtual_account_number}</div>
+            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.55)' }}>
+              {`Reference: ${job.payaza_reference || job.id}`}
+            </div>
           </div>
         )}
 
