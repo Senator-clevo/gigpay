@@ -38,69 +38,43 @@ function PayInner() {
     }
   }
 
-  function handlePayWithPayaza() {
-    if (!job || paying) return
-    setPaying(true)
+  async function handlePayWithPayaza() {
+  if (!job || paying) return
+  setPaying(true)
 
-    const amount = job.amount // in Naira
-    const email = job.client_email || 'client@gigpay.app'
-    const firstName = (job.client_name || 'Client').split(' ')[0]
-    const lastName = (job.client_name || 'User').split(' ')[1] || 'User'
-    const reference = job.payaza_reference || job.id
-    const description = job.title
-    const callbackUrl = `${window.location.origin}/pay/${job.id}?paid=true`
-    const publicKey = process.env.NEXT_PUBLIC_PAYAZA_PUBLIC_KEY || 'PZ78-PKTEST-93987866-9EF7-4D96-8BF2-9F1EF818286C'
+  try {
+    const { PayazaCheckout } = await import('payaza-web-sdk')
 
-    const launchCheckoutUrl = () => {
-  const params = new URLSearchParams({
-    merchant_key: publicKey,
-    amount: String(amount),
-    currency: 'NGN',
-    email,
-    first_name: firstName,
-    last_name: lastName,
-    reference,
-    description,
-    callback_url: callbackUrl
-  })
-
-  const checkoutUrl = `https://checkout.payaza.africa/?${params.toString()}`
-  // Always redirect in same tab — no popup blocking issues
-  window.location.href = checkoutUrl
-}
-
-    const script = document.createElement('script')
-    script.src = 'https://js.payaza.africa/inline.js'
-    script.async = true
-    script.onload = () => {
-      if (window.PayazaCheckout && typeof window.PayazaCheckout.init === 'function') {
-        window.PayazaCheckout.init({
-          merchant_key: publicKey,
-          amount,
-          currency_code: 'NGN',
-          email,
-          first_name: firstName,
-          last_name: lastName,
-          reference,
-          description,
-          callback(response) {
-            setPaying(false)
-            if (response?.status === 'successful' || response?.status === 'SUCCESSFUL') {
-              setPaid(true)
-            }
-          }
-        })
-        return
+    PayazaCheckout.init({
+      merchant_key: 'PZ78-PKTEST-93987866-9EF7-4D96-8BF2-9F1EF818286C',
+      amount: Number(job.amount),
+      currency_code: 'NGN',
+      email: job.client_email || 'client@gigpay.app',
+      first_name: (job.client_name || 'Client').split(' ')[0],
+      last_name: (job.client_name || 'User').split(' ')[1] || 'User',
+      reference: job.payaza_reference || job.id,
+      description: job.title,
+      callback: function(response) {
+        console.log('Payaza response:', response)
+        if (
+          response?.status === 'successful' ||
+          response?.status === 'SUCCESSFUL' ||
+          response?.transaction_status === 'Funds Received'
+        ) {
+          setPaid(true)
+        }
+        setPaying(false)
+      },
+      onClose: function() {
+        setPaying(false)
       }
-      launchCheckoutUrl()
-    }
-    script.onerror = () => {
-      console.error('Failed to load Payaza SDK, falling back to checkout URL')
-      launchCheckoutUrl()
-    }
-
-    document.head.appendChild(script)
+    })
+  } catch (err) {
+    console.error('Payaza SDK error:', err)
+    setPaying(false)
+    alert('Payment error: ' + err.message)
   }
+}
 
 
   const displayAmount = job ? Number(job.amount) : 0
