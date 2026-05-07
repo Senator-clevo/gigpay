@@ -38,67 +38,65 @@ function PayInner() {
     }
   }
 
-async function handlePayWithPayaza() {
-  if (!job || paying) return
-  setPaying(true)
+  async function handlePayWithPayaza() {
+    if (!job || paying) return
+    setPaying(true)
 
-  try {
-    const module = await import('@payaza/web-sdk')
-    const PayazaCheckout = module.default || module.PayazaCheckout
+    try {
+      const module = await import('@payaza/web-sdk')
+      const PayazaCheckout = module.default || module.PayazaCheckout
 
-    console.log('Module keys:', Object.keys(module))
-    console.log('PayazaCheckout:', typeof PayazaCheckout)
+      console.log('Module keys:', Object.keys(module))
+      console.log('PayazaCheckout type:', typeof PayazaCheckout)
 
-    const data = {
-      merchant_key: 'PZ78-PKTEST-93987866-9EF7-4D96-8BF2-9F1EF818286C',
-      connection_mode: 'test',
-      checkout_amount: Number(job.amount),
-      currency_code: 'NGN',
-      email_address: job.client_email || 'client@gigpay.app',
-      phone_number: '08000000000',
-      first_name: (job.client_name || 'Client').split(' ')[0],
-      last_name: (job.client_name || 'User').split(' ')[1] || 'User',
-      transaction_reference: job.payaza_reference || job.id,
-      onClose: function() {
-        console.log('Closed')
-        setPaying(false)
-      },
-      callback: function(callbackResponse) {
-        console.log('Payaza callback:', callbackResponse)
-        if (
-          callbackResponse?.status === 'successful' ||
-          callbackResponse?.status === 'SUCCESSFUL' ||
-          callbackResponse?.transaction_status === 'Funds Received'
-        ) {
-          setPaid(true)
+      const data = {
+        merchant_key: 'PZ78-PKTEST-93987866-9EF7-4D96-8BF2-9F1EF818286C',
+        connection_mode: 'test',
+        checkout_amount: Number(job.amount),
+        currency_code: 'NGN',
+        email_address: job.client_email || 'client@gigpay.app',
+        phone_number: '08000000000',
+        first_name: (job.client_name || 'Client').split(' ')[0],
+        last_name: (job.client_name || 'User').split(' ')[1] || 'User',
+        transaction_reference: job.payaza_reference || job.id,
+        onClose: function() {
+          console.log('Closed')
+          setPaying(false)
+        },
+        callback: function(callbackResponse) {
+          console.log('Payaza callback:', callbackResponse)
+          if (
+            callbackResponse?.status === 'successful' ||
+            callbackResponse?.status === 'SUCCESSFUL' ||
+            callbackResponse?.transaction_status === 'Funds Received'
+          ) {
+            setPaid(true)
+          }
+          setPaying(false)
         }
-        setPaying(false)
       }
+
+      let checkout
+      if (typeof PayazaCheckout === 'function') {
+        checkout = new PayazaCheckout(data)
+      } else if (PayazaCheckout && typeof PayazaCheckout.setup === 'function') {
+        checkout = PayazaCheckout.setup(data)
+      } else if (module.setup && typeof module.setup === 'function') {
+        checkout = module.setup(data)
+      } else {
+        throw new Error('Cannot find PayazaCheckout. Keys: ' + Object.keys(module).join(', '))
+      }
+
+      console.log('Checkout instance created, calling showPopup')
+      checkout.showPopup()
+
+    } catch (err) {
+      console.error('Payaza error:', err)
+      setPaying(false)
+      alert('Payment error: ' + err.message)
     }
-
-    // Try both ways the docs show
-    let checkout
-    if (typeof PayazaCheckout === 'function') {
-      checkout = new PayazaCheckout(data)
-    } else if (PayazaCheckout && typeof PayazaCheckout.setup === 'function') {
-      checkout = PayazaCheckout.setup(data)
-    } else if (module.setup && typeof module.setup === 'function') {
-      checkout = module.setup(data)
-    } else {
-      throw new Error('Cannot find PayazaCheckout constructor. Keys: ' + Object.keys(module).join(', '))
-    }
-
-    console.log('Checkout instance:', checkout)
-    checkout.showPopup()
-
-  } catch (err) {
-    console.error('Payaza error:', err)
-    setPaying(false)
-    alert('Payment error: ' + err.message)
   }
-}
-  document.head.appendChild(script)
-}
+
   const displayAmount = job ? Number(job.amount) : 0
 
   if (loading) {
@@ -219,16 +217,14 @@ async function handlePayWithPayaza() {
             letterSpacing: '0.05em'
           }}
         >
-          {paying ? 'Opening Payaza checkout…' : `Pay ₦${displayAmount.toLocaleString()} Now`}
+          {paying ? 'Opening Payaza checkout…' : 'Pay ₦' + displayAmount.toLocaleString() + ' Now'}
         </button>
 
         {job.virtual_account_number && (
           <div style={{ marginTop: '20px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(201,168,76,0.1)', borderRadius: '18px', padding: '18px', color: '#fff' }}>
-            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', marginBottom: '8px' }}>Payaza virtual account</div>
+            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', marginBottom: '8px' }}>{'Payaza virtual account'}</div>
             <div style={{ fontSize: '16px', fontWeight: 700, marginBottom: '6px' }}>{job.virtual_account_number}</div>
-            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.55)' }}>
-              {`Reference: ${job.payaza_reference || job.id}`}
-            </div>
+            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.55)' }}>{'Reference: ' + (job.payaza_reference || job.id)}</div>
           </div>
         )}
 
