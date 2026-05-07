@@ -1,36 +1,44 @@
 import { NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { createServerSupabase } from '@/lib/supabase-server'
 
 export async function POST(request) {
   try {
     const body = await request.json()
-    console.log('Payaza webhook received:', body)
+    console.log('Webhook received:', JSON.stringify(body))
 
-    const { transaction_reference, status, amount } = body
+    const supabase = createServerSupabase()
 
-    if (status === 'successful' || status === 'SUCCESSFUL') {
-      // Find the job by its reference
-      const { data: job, error } = await supabase
+    const reference = 
+      body?.merchant_reference ||
+      body?.transaction_reference ||
+      body?.account_reference ||
+      null
+
+    const status = body?.status || body?.transaction_status || null
+
+    console.log('Reference:', reference, 'Status:', status)
+
+    if (reference && (status === 'Completed' || status === 'Funds Received')) {
+      const jobId = reference.split('_')[0]
+
+      const { data: job } = await supabase
         .from('jobs')
         .select('*')
-        .eq('payaza_reference', transaction_reference)
+        .or(`id.eq.${jobId},payaza_reference.eq.${reference}`)
         .single()
 
-      if (job && !error) {
-        // Update job status to funded
+      if (job) {
         await supabase
           .from('jobs')
           .update({ status: 'funded' })
           .eq('id', job.id)
-
-        console.log(`Job ${job.id} funded successfully`)
+        console.log('Job funded:', job.id)
       }
     }
 
     return NextResponse.json({ received: true })
-
-  } catch (error) {
-    console.error('Webhook error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  } catch (err) {
+    console.error('Webhook error:', err)
+    return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
