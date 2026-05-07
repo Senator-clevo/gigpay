@@ -41,18 +41,23 @@ function PayInner() {
   async function handlePayWithPayaza() {
   if (!job) return
 
+  const firstName = (job.client_name || 'Client').split(' ')[0]
+  const lastName = (job.client_name || 'Client User').split(' ')[1] || 'User'
+
   const params = new URLSearchParams({
     merchant_key: process.env.NEXT_PUBLIC_PAYAZA_PUBLIC_KEY,
-    amount: String(Number(job.amount)),
-    currency: 'NGN',
-    reference: job.payaza_reference || job.id,
-    customer_email: job.client_email || 'client@gigpay.app',
-    customer_name: job.client_name || 'Client',
-    description: job.title,
-    callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/pay/${job.id}?paid=true`
+    connection_mode: 'Test',
+    checkout_amount: String(Number(job.amount)),
+    currency_code: 'NGN',
+    email_address: job.client_email || 'client@gigpay.app',
+    first_name: firstName,
+    last_name: lastName,
+    phone_number: '08000000000',
+    transaction_reference: job.payaza_reference || job.id,
+    redirect_url: `${process.env.NEXT_PUBLIC_APP_URL}/pay/${job.id}?paid=true`
   })
 
-  const checkoutUrl = `https://checkout.payaza.africa/?${params.toString()}`
+  const checkoutUrl = `https://business.payaza.africa/payment-page?${params.toString()}`
   console.log('Opening:', checkoutUrl)
   window.open(checkoutUrl, '_blank')
 }
