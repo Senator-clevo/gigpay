@@ -13,16 +13,11 @@ function PayInner() {
   const [worker, setWorker] = useState(null)
   const [loading, setLoading] = useState(true)
   const [paid, setPaid] = useState(false)
-  const [paying, setPaying] = useState(false)
-  const [sdkLoaded, setSdkLoaded] = useState(false) // ✅ ADDED
 
   useEffect(() => {
     if (!id) return
-    console.log('Supabase URL set:', !!process.env.NEXT_PUBLIC_SUPABASE_URL)
-    console.log('Key:', process.env.NEXT_PUBLIC_PAYAZA_PUBLIC_KEY)
     if (searchParams.get('paid') === 'true') setPaid(true)
     loadJob()
-    loadPayazaSdk() // ✅ Load SDK on mount
   }, [id])
 
   async function loadJob() {
@@ -42,107 +37,29 @@ function PayInner() {
     }
   }
 
-  // ✅ FIXED: Properly load SDK from correct URL
-  async function loadPayazaSdk() {
-    if (window.PayazaCheckout) {
-      console.log('✅ Payaza SDK already loaded')
-      setSdkLoaded(true)
-      return
-    }
-
-    console.log('📦 Attempting to load Payaza SDK from CDN...')
-    
-    const urls = [
-      'https://checkout.payaza.africa/js/payaza-checkout.js', // Primary (correct)
-      'https://cdn.payaza.africa/checkout/payaza-checkout.js'   // Fallback
-    ]
-
-    for (const url of urls) {
-      try {
-        await new Promise((resolve, reject) => {
-          const script = document.createElement('script')
-          script.src = url
-          script.type = 'text/javascript'
-          script.async = true
-          
-          script.onload = () => {
-            console.log(`✅ Payaza SDK loaded from: ${url}`)
-            if (window.PayazaCheckout) {
-              console.log('✅ PayazaCheckout available on window')
-              setSdkLoaded(true)
-              resolve()
-            } else {
-              reject(new Error('PayazaCheckout not found on window'))
-            }
-          }
-          
-          script.onerror = () => {
-            console.warn(`⚠️ Failed to load from ${url}`)
-            reject(new Error(`Failed to load from ${url}`))
-          }
-          
-          document.head.appendChild(script)
-        })
-        return // Success, exit function
-      } catch (err) {
-        console.error(err.message)
-        // Continue to next URL
-      }
-    }
-
-    // All URLs failed
-    console.error('❌ Failed to load Payaza SDK from all CDN URLs')
-    setSdkLoaded(false)
-  }
-
+  // ✅ FIXED: Redirect to Payaza's hosted checkout
   async function handlePayWithPayaza() {
-    console.log('🚀 Starting Payaza payment...')
+    if (!job) return
     
-    if (!sdkLoaded || !window.PayazaCheckout) {
-      alert('❌ Payaza SDK is still loading. Please wait and try again.')
-      console.error('SDK not ready. sdkLoaded:', sdkLoaded, 'window.PayazaCheckout:', !!window.PayazaCheckout)
-      return
-    }
-
-    if (!job || paying) return
-    setPaying(true)
-
     try {
-      console.log('⚙️ Setting up Payaza checkout...')
+      console.log('Opening Payaza checkout for job:', job.id)
       
-      window.PayazaCheckout.setup({
-        key: process.env.NEXT_PUBLIC_PAYAZA_PUBLIC_KEY,
-        customer: {
-          email: job.client_email || 'client@gigpay.app',
-          name: job.client_name || 'Client',
-          phone_number: '08000000000'
-        },
-        amount: Number(job.amount),
-        currency: 'NGN',
-        reference: job.payaza_reference || job.id,
-        onClose: function() {
-          console.log('⏹️ Payaza checkout closed')
-          setPaying(false)
-        },
-        onSuccess: function(response) {
-          console.log('✅ Payaza payment successful:', response)
-          setPaid(true)
-          setPaying(false)
-        },
-        onError: function(error) {
-          console.error('❌ Payaza payment error:', error)
-          setPaying(false)
-          alert('Payment failed: ' + (error?.message || 'Unknown error'))
-        }
-      })
-
-      console.log('🔓 Opening Payaza iframe...')
-      window.PayazaCheckout.openIframe()
-
+      // Build Payaza checkout URL
+      // Format: https://checkout.payaza.africa/?merchant_key=YOUR_KEY&amount=1000&reference=unique_ref
+      const payazaUrl = new URL('https://checkout.payaza.africa/')
+      payazaUrl.searchParams.append('merchant_key', process.env.NEXT_PUBLIC_PAYAZA_PUBLIC_KEY)
+      payazaUrl.searchParams.append('amount', Number(job.amount))
+      payazaUrl.searchParams.append('currency', 'NGN')
+      payazaUrl.searchParams.append('reference', job.payaza_reference || job.id)
+      payazaUrl.searchParams.append('customer_email', job.client_email || 'client@gigpay.app')
+      payazaUrl.searchParams.append('customer_name', job.client_name || 'Client')
+      payazaUrl.searchParams.append('description', job.title)
+      
+      // Redirect to Payaza checkout
+      window.location.href = payazaUrl.toString()
     } catch (err) {
-      console.error('❌ Payaza checkout error:', err)
-      setPaying(false)
-      alert('Payment setup error: ' + err.message)
+      console.error('Payment error:', err)
+      alert('Payment error: ' + err.message)
     }
   }
 
@@ -251,22 +168,24 @@ function PayInner() {
 
         <button
           onClick={handlePayWithPayaza}
-          disabled={paying || !sdkLoaded}
           style={{
             width: '100%',
-            background: (paying || !sdkLoaded) ? 'rgba(201,168,76,0.35)' : GOLD,
+            background: GOLD,
             color: '#1a1209',
             border: 'none',
             borderRadius: '20px',
             padding: '20px',
             fontSize: '16px',
             fontWeight: 700,
-            cursor: (paying || !sdkLoaded) ? 'not-allowed' : 'pointer',
+            cursor: 'pointer',
             textTransform: 'uppercase',
-            letterSpacing: '0.05em'
+            letterSpacing: '0.05em',
+            transition: 'all 0.3s ease'
           }}
+          onMouseEnter={(e) => e.target.style.transform = 'translateY(-2px)'}
+          onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
         >
-          {!sdkLoaded ? '⏳ Loading Payment System...' : paying ? 'Processing...' : 'Pay ₦' + displayAmount.toLocaleString() + ' Now'}
+          {'Pay ₦' + displayAmount.toLocaleString() + ' Now'}
         </button>
 
         {job.virtual_account_number && (
