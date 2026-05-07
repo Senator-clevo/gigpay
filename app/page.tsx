@@ -1,38 +1,78 @@
 'use client'
-import { useEffect, useState } from 'react'
+
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 
 export default function LandingPage() {
   const [isLoaded, setIsLoaded] = useState(false)
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 } as { x: number; y: number })
+  const [visibleSections, setVisibleSections] = useState<{ [key: string]: boolean }>({})
+  const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setIsLoaded(true)
-    const handleMouseMove = (e: MouseEvent) => {
-      setMousePosition({ x: e.clientX, y: e.clientY })
+
+    const handleScroll = () => {
+      const sections = ['features', 'stats', 'how', 'cta']
+      sections.forEach(section => {
+        const element = document.getElementById(section)
+        if (element) {
+          const rect = element.getBoundingClientRect()
+          const isVisible = rect.top < window.innerHeight * 0.75
+          setVisibleSections(prev => ({
+            ...prev,
+            [section]: isVisible
+          }))
+        }
+      })
     }
-    window.addEventListener('mousemove', handleMouseMove)
-    return () => window.removeEventListener('mousemove', handleMouseMove)
+
+    window.addEventListener('scroll', handleScroll)
+    handleScroll()
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
+    }
   }, [])
 
   return (
     <>
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
         * {
           margin: 0;
           padding: 0;
           box-sizing: border-box;
         }
 
-        body {
-          font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-          overflow-x: hidden;
+        html {
+          background: #faf8f5;
+          scroll-behavior: smooth;
         }
 
+        body {
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          overflow-x: hidden;
+          background: #faf8f5;
+        }
+
+        /* ===== MATURE ANIMATIONS ===== */
+        
         @keyframes fadeInUp {
           from {
             opacity: 0;
-            transform: translateY(30px);
+            transform: translateY(40px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes fadeInDown {
+          from {
+            opacity: 0;
+            transform: translateY(-40px);
           }
           to {
             opacity: 1;
@@ -43,7 +83,7 @@ export default function LandingPage() {
         @keyframes slideInLeft {
           from {
             opacity: 0;
-            transform: translateX(-50px);
+            transform: translateX(-60px);
           }
           to {
             opacity: 1;
@@ -54,7 +94,7 @@ export default function LandingPage() {
         @keyframes slideInRight {
           from {
             opacity: 0;
-            transform: translateX(50px);
+            transform: translateX(60px);
           }
           to {
             opacity: 1;
@@ -67,103 +107,132 @@ export default function LandingPage() {
             transform: translateY(0px);
           }
           50% {
-            transform: translateY(-20px);
+            transform: translateY(-16px);
           }
         }
 
         @keyframes glow {
           0%, 100% {
-            box-shadow: 0 0 20px rgba(201, 168, 76, 0.3);
+            box-shadow: 0 0 20px rgba(201, 168, 76, 0.3), 0 0 40px rgba(201, 168, 76, 0.1);
           }
           50% {
-            box-shadow: 0 0 40px rgba(201, 168, 76, 0.6);
+            box-shadow: 0 0 30px rgba(201, 168, 76, 0.5), 0 0 60px rgba(201, 168, 76, 0.2);
           }
         }
 
-        @keyframes pulse {
+        @keyframes glowText {
+          0%, 100% {
+            text-shadow: 0 0 10px rgba(201, 168, 76, 0.3), 0 0 20px rgba(201, 168, 76, 0.1);
+          }
+          50% {
+            text-shadow: 0 0 20px rgba(201, 168, 76, 0.6), 0 0 30px rgba(201, 168, 76, 0.3);
+          }
+        }
+
+        @keyframes pulse-glow {
           0%, 100% {
             opacity: 1;
+            box-shadow: 0 0 15px rgba(201, 168, 76, 0.2);
           }
           50% {
-            opacity: 0.5;
+            opacity: 0.85;
+            box-shadow: 0 0 30px rgba(201, 168, 76, 0.4);
           }
         }
 
-        @keyframes orb-move {
+        @keyframes scale-in {
+          from {
+            opacity: 0;
+            transform: scale(0.93);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+
+        @keyframes bounce-in {
           0% {
-            transform: translate(0, 0);
+            opacity: 0;
+            transform: translateY(30px) scale(0.9);
           }
-          33% {
-            transform: translate(30px, -30px);
-          }
-          66% {
-            transform: translate(-20px, 20px);
+          60% {
+            opacity: 1;
           }
           100% {
-            transform: translate(0, 0);
+            transform: translateY(0) scale(1);
           }
         }
 
-        .landing-root {
-          min-height: 100vh;
-          background: linear-gradient(135deg, #0f0f0f 0%, #1a1209 50%, #0d0804 100%);
-          position: relative;
-          overflow: hidden;
+        @keyframes shimmer {
+          0%, 100% {
+            background-position: -1000px 0;
+          }
+          100% {
+            background-position: 1000px 0;
+          }
         }
 
-        /* Animated background orbs */
+        @keyframes floating-icon {
+          0%, 100% {
+            transform: translateY(0px);
+          }
+          25% {
+            transform: translateY(-8px);
+          }
+          50% {
+            transform: translateY(-12px);
+          }
+          75% {
+            transform: translateY(-6px);
+          }
+        }
+
+        /* ===== GRADIENT ORBS ===== */
         .orb {
           position: fixed;
           border-radius: 50%;
           pointer-events: none;
+          mix-blend-mode: multiply;
           z-index: 0;
         }
 
         .orb-1 {
-          width: 400px;
-          height: 400px;
-          background: radial-gradient(circle, rgba(201, 168, 76, 0.15), transparent);
-          top: -100px;
-          left: -100px;
-          animation: orb-move 20s infinite ease-in-out;
+          width: 500px;
+          height: 500px;
+          background: radial-gradient(circle, rgba(201, 168, 76, 0.25) 0%, transparent 70%);
+          top: -150px;
+          left: -150px;
+          animation: float 8s ease-in-out infinite;
         }
 
         .orb-2 {
-          width: 300px;
-          height: 300px;
-          background: radial-gradient(circle, rgba(160, 136, 255, 0.1), transparent);
-          bottom: -50px;
-          right: -50px;
-          animation: orb-move 25s infinite ease-in-out reverse;
+          width: 400px;
+          height: 400px;
+          background: radial-gradient(circle, rgba(160, 136, 100, 0.18) 0%, transparent 70%);
+          bottom: -100px;
+          right: -100px;
+          animation: float 10s ease-in-out infinite 1s;
         }
 
         .orb-3 {
-          width: 250px;
-          height: 250px;
-          background: radial-gradient(circle, rgba(0, 255, 136, 0.08), transparent);
+          width: 300px;
+          height: 300px;
+          background: radial-gradient(circle, rgba(180, 160, 140, 0.15) 0%, transparent 70%);
           top: 50%;
-          right: 10%;
-          animation: orb-move 30s infinite ease-in-out;
+          right: 5%;
+          animation: float 12s ease-in-out infinite 2s;
         }
 
-        /* Noise texture */
-        .noise {
-          position: fixed;
-          inset: 0;
-          pointer-events: none;
-          z-index: 1;
-          opacity: 0.02;
-          background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect fill="%23fff" width="100" height="100"/><rect fill="%23000" width="50" height="50"/><rect fill="%23000" x="50" y="50" width="50" height="50"/></svg>');
-        }
-
-        /* Header */
+        /* ===== HEADER ===== */
         .header {
           position: relative;
-          z-index: 10;
-          padding: 24px 40px;
-          backdrop-filter: blur(20px);
-          border-bottom: 1px solid rgba(201, 168, 76, 0.1);
-          background: rgba(15, 15, 15, 0.4);
+          z-index: 50;
+          padding: 28px 40px;
+          backdrop-filter: blur(10px);
+          border-bottom: 1px solid rgba(201, 168, 76, 0.15);
+          background: rgba(250, 248, 245, 0.7);
+          animation: fadeInDown 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
         .header-content {
@@ -172,6 +241,7 @@ export default function LandingPage() {
           display: flex;
           align-items: center;
           justify-content: space-between;
+          gap: 40px;
         }
 
         .logo {
@@ -179,36 +249,51 @@ export default function LandingPage() {
           align-items: center;
           gap: 12px;
           text-decoration: none;
-          font-family: 'Playfair Display', serif;
+          font-family: 'Syne', sans-serif;
           font-weight: 700;
-          font-size: 24px;
-          color: #fff;
-          animation: slideInLeft 0.8s ease-out;
+          font-size: 26px;
+          color: #1a1209;
+          transition: all 0.3s ease;
+        }
+
+        .logo:hover {
+          transform: translateX(2px);
         }
 
         .logo-mark {
-          width: 40px;
-          height: 40px;
-          background: linear-gradient(135deg, #C9A84C, #A67C30);
+          width: 44px;
+          height: 44px;
+          background: linear-gradient(135deg, #c9a84c, #a67c30);
           border-radius: 12px;
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 8px 24px rgba(201, 168, 76, 0.3);
-          animation: glow 3s ease-in-out infinite;
+          animation: pulse-glow 3s ease-in-out infinite;
+          transition: all 0.3s ease;
         }
 
-        .nav-links {
+        .logo-mark:hover {
+          transform: scale(1.05);
+          box-shadow: 0 8px 24px rgba(201, 168, 76, 0.3);
+        }
+
+        .logo-mark svg {
+          width: 22px;
+          height: 22px;
+          fill: white;
+        }
+
+        .nav {
           display: flex;
-          gap: 32px;
+          gap: 28px;
           align-items: center;
           animation: slideInRight 0.8s ease-out;
         }
 
         .nav-link {
-          color: rgba(255, 255, 255, 0.7);
+          color: #555;
           text-decoration: none;
-          font-size: 14px;
+          font-size: 15px;
           font-weight: 500;
           transition: all 0.3s ease;
           position: relative;
@@ -217,53 +302,53 @@ export default function LandingPage() {
         .nav-link::after {
           content: '';
           position: absolute;
-          bottom: -4px;
+          bottom: -6px;
           left: 0;
           width: 0;
           height: 2px;
-          background: linear-gradient(90deg, #C9A84C, #A67C30);
+          background: linear-gradient(90deg, #c9a84c, #a67c30);
           transition: width 0.3s ease;
         }
 
         .nav-link:hover {
-          color: #C9A84C;
+          color: #c9a84c;
         }
 
         .nav-link:hover::after {
           width: 100%;
         }
 
-        .cta-header {
-          padding: 12px 24px;
-          background: linear-gradient(135deg, #C9A84C, #A67C30);
-          color: #0f0f0f;
+        .btn-header {
+          padding: 12px 26px;
+          background: linear-gradient(135deg, #c9a84c, #a67c30);
+          color: #fff;
           border-radius: 12px;
           text-decoration: none;
           font-weight: 600;
           font-size: 14px;
-          transition: all 0.3s cubic-bezier(0.77, 0, 0.175, 1);
-          box-shadow: 0 8px 24px rgba(201, 168, 76, 0.3);
+          transition: all 0.3s ease;
+          box-shadow: 0 6px 20px rgba(201, 168, 76, 0.25);
         }
 
-        .cta-header:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 12px 32px rgba(201, 168, 76, 0.4);
+        .btn-header:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 10px 30px rgba(201, 168, 76, 0.35);
         }
 
-        /* Hero Section */
+        /* ===== HERO SECTION ===== */
         .hero {
           position: relative;
-          z-index: 5;
-          min-height: calc(100vh - 80px);
+          z-index: 10;
+          min-height: 100vh;
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 60px 40px;
+          padding: 80px 40px;
           text-align: center;
         }
 
         .hero-content {
-          max-width: 800px;
+          max-width: 900px;
           animation: fadeInUp 1s ease-out;
         }
 
@@ -271,129 +356,170 @@ export default function LandingPage() {
           display: inline-flex;
           align-items: center;
           gap: 8px;
-          padding: 12px 20px;
-          background: rgba(201, 168, 76, 0.1);
+          padding: 13px 22px;
+          background: rgba(201, 168, 76, 0.12);
           border: 1px solid rgba(201, 168, 76, 0.3);
           border-radius: 50px;
-          color: #C9A84C;
-          font-size: 13px;
+          color: #c9a84c;
+          font-size: 12px;
           font-weight: 600;
-          margin-bottom: 24px;
+          margin-bottom: 28px;
           text-transform: uppercase;
-          letter-spacing: 0.05em;
-          animation: fadeInUp 1s ease-out 0.1s both;
+          letter-spacing: 0.08em;
+          animation: scale-in 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s both;
+          backdrop-filter: blur(10px);
         }
 
         .hero-title {
-          font-family: 'Playfair Display', serif;
-          font-size: clamp(42px, 8vw, 72px);
+          font-family: 'Syne', sans-serif;
+          font-size: clamp(48px, 9vw, 84px);
           font-weight: 700;
-          color: #fff;
-          margin-bottom: 16px;
-          line-height: 1.1;
+          color: #1a1209;
+          margin-bottom: 20px;
+          line-height: 1.05;
           animation: fadeInUp 1s ease-out 0.2s both;
+          letter-spacing: -0.02em;
         }
 
-        .hero-title span {
-          background: linear-gradient(135deg, #C9A84C, #A67C30, #C9A84C);
+        .hero-title .accent {
+          background: linear-gradient(135deg, #c9a84c, #a67c30);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
-          animation: pulse 3s ease-in-out infinite;
+          animation: glowText 3s ease-in-out infinite;
         }
 
         .hero-subtitle {
-          font-size: clamp(16px, 2vw, 20px);
-          color: rgba(255, 255, 255, 0.6);
-          margin-bottom: 40px;
-          line-height: 1.6;
+          font-size: clamp(16px, 2.5vw, 22px);
+          color: #666;
+          margin-bottom: 48px;
+          line-height: 1.7;
           animation: fadeInUp 1s ease-out 0.3s both;
+          font-weight: 400;
         }
 
         .hero-cta {
           display: flex;
-          gap: 16px;
+          gap: 18px;
           justify-content: center;
           flex-wrap: wrap;
           animation: fadeInUp 1s ease-out 0.4s both;
         }
 
         .btn-primary {
-          padding: 18px 40px;
-          background: linear-gradient(135deg, #C9A84C, #A67C30);
-          color: #0f0f0f;
+          padding: 20px 44px;
+          background: linear-gradient(135deg, #c9a84c, #a67c30);
+          color: #fff;
           border: none;
-          border-radius: 20px;
+          border-radius: 16px;
           font-weight: 700;
           font-size: 16px;
           text-decoration: none;
           display: inline-flex;
           align-items: center;
-          gap: 8px;
+          gap: 10px;
           cursor: pointer;
           transition: all 0.3s cubic-bezier(0.77, 0, 0.175, 1);
-          box-shadow: 0 12px 32px rgba(201, 168, 76, 0.3);
+          box-shadow: 0 12px 36px rgba(201, 168, 76, 0.3);
+          font-family: 'Inter', sans-serif;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .btn-primary::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+          transition: left 0.5s ease;
+        }
+
+        .btn-primary:hover::before {
+          left: 100%;
         }
 
         .btn-primary:hover {
-          transform: translateY(-6px);
-          box-shadow: 0 20px 48px rgba(201, 168, 76, 0.4);
+          transform: translateY(-5px);
+          box-shadow: 0 20px 50px rgba(201, 168, 76, 0.4);
         }
 
         .btn-secondary {
-          padding: 18px 40px;
+          padding: 20px 44px;
           background: transparent;
-          color: #fff;
-          border: 2px solid rgba(201, 168, 76, 0.5);
-          border-radius: 20px;
+          color: #1a1209;
+          border: 2px solid rgba(201, 168, 76, 0.4);
+          border-radius: 16px;
           font-weight: 700;
           font-size: 16px;
           text-decoration: none;
           display: inline-flex;
           align-items: center;
-          gap: 8px;
+          gap: 10px;
           cursor: pointer;
           transition: all 0.3s ease;
+          font-family: 'Inter', sans-serif;
+          position: relative;
         }
 
         .btn-secondary:hover {
-          border-color: #C9A84C;
-          background: rgba(201, 168, 76, 0.1);
-          transform: translateY(-6px);
+          border-color: #c9a84c;
+          background: rgba(201, 168, 76, 0.08);
+          transform: translateY(-5px);
+          box-shadow: 0 10px 30px rgba(201, 168, 76, 0.15);
         }
 
-        /* Features Section */
+        /* ===== FEATURES SECTION ===== */
         .features {
           position: relative;
-          z-index: 5;
-          padding: 100px 40px;
+          z-index: 10;
+          padding: 120px 40px;
           max-width: 1400px;
           margin: 0 auto;
         }
 
-        .section-title {
-          font-family: 'Playfair Display', serif;
-          font-size: clamp(36px, 6vw, 56px);
+        .section-label {
+          display: inline-block;
+          font-size: 12px;
           font-weight: 700;
-          color: #fff;
-          text-align: center;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: #c9a84c;
+          margin-bottom: 12px;
+          animation: fadeInUp 0.6s ease-out;
+        }
+
+        .section-title {
+          font-family: 'Syne', sans-serif;
+          font-size: clamp(40px, 7vw, 64px);
+          font-weight: 700;
+          color: #1a1209;
           margin-bottom: 60px;
+          line-height: 1.1;
+          animation: fadeInUp 0.8s ease-out 0.1s both;
+          letter-spacing: -0.02em;
         }
 
         .features-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-          gap: 30px;
+          grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+          gap: 32px;
         }
 
         .feature-card {
-          padding: 40px 32px;
-          background: rgba(255, 255, 255, 0.02);
-          border: 1px solid rgba(201, 168, 76, 0.1);
-          border-radius: 24px;
+          padding: 44px 36px;
+          background: rgba(255, 255, 255, 0.8);
+          border: 1px solid rgba(201, 168, 76, 0.15);
+          border-radius: 20px;
           transition: all 0.4s cubic-bezier(0.77, 0, 0.175, 1);
           position: relative;
           overflow: hidden;
+          backdrop-filter: blur(10px);
+        }
+
+        .features .feature-card {
           animation: fadeInUp 1s ease-out both;
         }
 
@@ -409,76 +535,94 @@ export default function LandingPage() {
           animation-delay: 0.3s;
         }
 
+        .feature-card:nth-child(4) {
+          animation-delay: 0.4s;
+        }
+
         .feature-card::before {
           content: '';
           position: absolute;
           top: 0;
           left: 0;
           right: 0;
-          height: 1px;
-          background: linear-gradient(90deg, transparent, rgba(201, 168, 76, 0.5), transparent);
+          height: 2px;
+          background: linear-gradient(90deg, transparent, rgba(201, 168, 76, 0.4), transparent);
         }
 
         .feature-card:hover {
-          transform: translateY(-12px);
+          transform: translateY(-16px);
           border-color: rgba(201, 168, 76, 0.3);
-          box-shadow: 0 24px 48px rgba(201, 168, 76, 0.15);
-          background: rgba(255, 255, 255, 0.04);
+          box-shadow: 0 32px 64px rgba(201, 168, 76, 0.15);
+          background: rgba(255, 255, 255, 0.95);
         }
 
         .feature-icon {
-          width: 60px;
-          height: 60px;
-          background: linear-gradient(135deg, rgba(201, 168, 76, 0.2), rgba(160, 136, 255, 0.2));
-          border-radius: 16px;
+          width: 70px;
+          height: 70px;
+          background: linear-gradient(135deg, rgba(201, 168, 76, 0.15), rgba(160, 136, 100, 0.1));
+          border-radius: 18px;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 28px;
-          margin-bottom: 20px;
+          font-size: 36px;
+          margin-bottom: 24px;
           transition: all 0.3s ease;
+          animation: floating-icon 3s ease-in-out infinite;
         }
 
         .feature-card:hover .feature-icon {
-          transform: scale(1.1) rotate(5deg);
-          background: linear-gradient(135deg, rgba(201, 168, 76, 0.3), rgba(160, 136, 255, 0.3));
+          transform: scale(1.1);
+          background: linear-gradient(135deg, rgba(201, 168, 76, 0.3), rgba(160, 136, 100, 0.25));
+          animation: none;
         }
 
         .feature-title {
-          font-size: 20px;
+          font-size: 22px;
           font-weight: 700;
-          color: #fff;
-          margin-bottom: 12px;
+          color: #1a1209;
+          margin-bottom: 14px;
+          font-family: 'Syne', sans-serif;
+          transition: color 0.3s ease;
+        }
+
+        .feature-card:hover .feature-title {
+          color: #c9a84c;
         }
 
         .feature-desc {
-          font-size: 14px;
-          color: rgba(255, 255, 255, 0.6);
-          line-height: 1.6;
+          font-size: 15px;
+          color: #666;
+          line-height: 1.7;
+          transition: color 0.3s ease;
         }
 
-        /* Stats Section */
+        .feature-card:hover .feature-desc {
+          color: #555;
+        }
+
+        /* ===== STATS SECTION ===== */
         .stats {
           position: relative;
-          z-index: 5;
-          padding: 80px 40px;
-          background: linear-gradient(135deg, rgba(201, 168, 76, 0.05), rgba(160, 136, 255, 0.05));
-          border-top: 1px solid rgba(201, 168, 76, 0.1);
-          border-bottom: 1px solid rgba(201, 168, 76, 0.1);
+          z-index: 10;
+          padding: 100px 40px;
+          background: linear-gradient(135deg, rgba(201, 168, 76, 0.08), rgba(160, 136, 100, 0.06));
+          border-top: 1px solid rgba(201, 168, 76, 0.15);
+          border-bottom: 1px solid rgba(201, 168, 76, 0.15);
           max-width: 1400px;
           margin: 0 auto;
-          width: 100%;
+          border-radius: 24px;
         }
 
         .stats-grid {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-          gap: 40px;
+          gap: 50px;
           text-align: center;
         }
 
         .stat-item {
           animation: fadeInUp 1s ease-out both;
+          transition: all 0.3s ease;
         }
 
         .stat-item:nth-child(1) {
@@ -493,28 +637,125 @@ export default function LandingPage() {
           animation-delay: 0.3s;
         }
 
+        .stat-item:hover {
+          transform: scale(1.05);
+        }
+
         .stat-number {
-          font-family: 'Playfair Display', serif;
-          font-size: 48px;
+          font-family: 'Syne', sans-serif;
+          font-size: 56px;
           font-weight: 700;
-          background: linear-gradient(135deg, #C9A84C, #A67C30);
+          background: linear-gradient(135deg, #c9a84c, #a67c30);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
-          margin-bottom: 8px;
+          margin-bottom: 10px;
+          animation: glowText 2s ease-in-out infinite;
         }
 
         .stat-label {
           font-size: 14px;
-          color: rgba(255, 255, 255, 0.6);
+          color: #666;
           text-transform: uppercase;
-          letter-spacing: 0.05em;
+          letter-spacing: 0.06em;
+          font-weight: 600;
         }
 
-        /* CTA Section */
+        /* ===== HOW IT WORKS ===== */
+        .how-section {
+          position: relative;
+          z-index: 10;
+          padding: 120px 40px;
+          max-width: 1400px;
+          margin: 0 auto;
+        }
+
+        .steps-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+          gap: 32px;
+        }
+
+        .step-card {
+          position: relative;
+          padding: 40px 32px;
+          background: rgba(255, 255, 255, 0.7);
+          border: 1px solid rgba(201, 168, 76, 0.15);
+          border-radius: 16px;
+          text-align: center;
+          animation: bounce-in 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+          backdrop-filter: blur(10px);
+          transition: all 0.3s ease;
+        }
+
+        .step-card:nth-child(1) {
+          animation-delay: 0.1s;
+        }
+
+        .step-card:nth-child(2) {
+          animation-delay: 0.2s;
+        }
+
+        .step-card:nth-child(3) {
+          animation-delay: 0.3s;
+        }
+
+        .step-card:nth-child(4) {
+          animation-delay: 0.4s;
+        }
+
+        .step-card:hover {
+          transform: translateY(-12px);
+          box-shadow: 0 24px 48px rgba(201, 168, 76, 0.12);
+          border-color: rgba(201, 168, 76, 0.25);
+        }
+
+        .step-number {
+          width: 50px;
+          height: 50px;
+          background: linear-gradient(135deg, rgba(201, 168, 76, 0.25), rgba(160, 136, 100, 0.15));
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-family: 'Syne', sans-serif;
+          font-size: 24px;
+          font-weight: 700;
+          color: #c9a84c;
+          margin-bottom: 20px;
+          margin-left: auto;
+          margin-right: auto;
+          transition: all 0.3s ease;
+        }
+
+        .step-card:hover .step-number {
+          background: linear-gradient(135deg, rgba(201, 168, 76, 0.4), rgba(160, 136, 100, 0.3));
+          transform: scale(1.08);
+        }
+
+        .step-title {
+          font-family: 'Syne', sans-serif;
+          font-size: 20px;
+          font-weight: 700;
+          color: #1a1209;
+          margin-bottom: 12px;
+          transition: color 0.3s ease;
+        }
+
+        .step-card:hover .step-title {
+          color: #c9a84c;
+        }
+
+        .step-desc {
+          font-size: 14px;
+          color: #666;
+          line-height: 1.6;
+        }
+
+        /* ===== CTA SECTION ===== */
         .cta-section {
           position: relative;
-          z-index: 5;
+          z-index: 10;
           padding: 100px 40px;
           text-align: center;
           max-width: 900px;
@@ -522,57 +763,64 @@ export default function LandingPage() {
         }
 
         .cta-title {
-          font-family: 'Playfair Display', serif;
-          font-size: clamp(32px, 5vw, 52px);
+          font-family: 'Syne', sans-serif;
+          font-size: clamp(36px, 6vw, 56px);
           font-weight: 700;
-          color: #fff;
-          margin-bottom: 24px;
-          animation: fadeInUp 1s ease-out;
+          color: #1a1209;
+          margin-bottom: 28px;
+          line-height: 1.15;
+          animation: fadeInUp 0.8s ease-out;
+          letter-spacing: -0.01em;
         }
 
-        .cta-subtitle {
+        .cta-desc {
           font-size: 18px;
-          color: rgba(255, 255, 255, 0.6);
+          color: #666;
           margin-bottom: 40px;
-          animation: fadeInUp 1s ease-out 0.1s both;
+          line-height: 1.7;
+          animation: fadeInUp 0.8s ease-out 0.1s both;
         }
 
         .cta-buttons {
           display: flex;
-          gap: 16px;
+          gap: 18px;
           justify-content: center;
           flex-wrap: wrap;
-          animation: fadeInUp 1s ease-out 0.2s both;
+          animation: fadeInUp 0.8s ease-out 0.2s both;
         }
 
-        /* Footer */
+        /* ===== FOOTER ===== */
         .footer {
           position: relative;
-          z-index: 5;
-          padding: 60px 40px 40px;
-          border-top: 1px solid rgba(201, 168, 76, 0.1);
-          background: rgba(15, 15, 15, 0.4);
+          z-index: 10;
+          padding: 80px 40px 40px;
+          background: rgba(250, 248, 245, 0.5);
+          border-top: 1px solid rgba(201, 168, 76, 0.15);
+          max-width: 1400px;
+          margin: 0 auto;
         }
 
         .footer-content {
-          max-width: 1400px;
-          margin: 0 auto;
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-          gap: 40px;
-          margin-bottom: 40px;
+          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+          gap: 60px;
+          margin-bottom: 60px;
+          animation: fadeInUp 0.8s ease-out;
         }
 
-        .footer-section h3 {
-          color: #fff;
-          font-size: 16px;
+        .footer-section h4 {
+          font-family: 'Syne', sans-serif;
+          font-size: 14px;
           font-weight: 700;
-          margin-bottom: 16px;
+          color: #1a1209;
+          margin-bottom: 20px;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
         }
 
         .footer-link {
           display: block;
-          color: rgba(255, 255, 255, 0.6);
+          color: #666;
           text-decoration: none;
           font-size: 14px;
           margin-bottom: 12px;
@@ -580,89 +828,101 @@ export default function LandingPage() {
         }
 
         .footer-link:hover {
-          color: #C9A84C;
+          color: #c9a84c;
           transform: translateX(4px);
         }
 
         .footer-bottom {
-          border-top: 1px solid rgba(201, 168, 76, 0.1);
-          padding-top: 32px;
-          text-align: center;
-          color: rgba(255, 255, 255, 0.4);
+          border-top: 1px solid rgba(201, 168, 76, 0.15);
+          padding-top: 40px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 20px;
+          color: #999;
           font-size: 13px;
         }
 
-        /* Responsive */
+        /* ===== RESPONSIVE ===== */
         @media (max-width: 768px) {
-          .header {
-            padding: 16px 20px;
+          .header-content {
+            gap: 20px;
           }
 
-          .header-content {
-            flex-direction: column;
+          .nav {
             gap: 16px;
           }
 
-          .nav-links {
-            flex-direction: column;
-            gap: 12px;
-            width: 100%;
-          }
-
           .nav-link {
-            font-size: 13px;
+            font-size: 14px;
           }
 
           .hero {
-            padding: 40px 20px;
-            min-height: calc(100vh - 60px);
-          }
-
-          .features {
             padding: 60px 20px;
           }
 
-          .stats {
-            padding: 60px 20px;
-          }
-
+          .features,
+          .how-section,
           .cta-section {
-            padding: 60px 20px;
+            padding: 80px 20px;
           }
 
-          .hero-cta {
-            gap: 12px;
+          .features-grid,
+          .steps-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .feature-card,
+          .step-card {
+            padding: 32px 24px;
+          }
+
+          .cta-buttons {
+            flex-direction: column;
           }
 
           .btn-primary,
           .btn-secondary {
-            padding: 14px 28px;
-            font-size: 14px;
+            width: 100%;
+            justify-content: center;
+          }
+
+          .footer-content {
+            grid-template-columns: 1fr;
+            gap: 40px;
+          }
+
+          .footer-bottom {
+            flex-direction: column;
+            justify-content: center;
+            text-align: center;
           }
         }
       `}</style>
 
-      <div className="landing-root">
-        <div className="orb orb-1" />
-        <div className="orb orb-2" />
-        <div className="orb orb-3" />
-        <div className="noise" />
+      <div ref={containerRef} className="relative w-full">
+        {/* Floating Orbs */}
+        <div className="orb orb-1"></div>
+        <div className="orb orb-2"></div>
+        <div className="orb orb-3"></div>
 
         {/* Header */}
         <header className="header">
           <div className="header-content">
             <Link href="/" className="logo">
               <div className="logo-mark">
-                <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: '24px', height: '24px' }}>
-                  <path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>
+                <svg viewBox="0 0 24 24" fill="white">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/>
                 </svg>
               </div>
               GigPay
             </Link>
-            <nav className="nav-links">
+            <nav className="nav">
               <a href="#features" className="nav-link">Features</a>
-              <a href="#how-it-works" className="nav-link">How it Works</a>
-              <Link href="/login" className="cta-header">Sign In</Link>
+              <a href="#how" className="nav-link">How It Works</a>
+              <a href="#cta" className="nav-link">Get Started</a>
+              <a href="/login" className="btn-header">Login</a>
             </nav>
           </div>
         </header>
@@ -670,161 +930,155 @@ export default function LandingPage() {
         {/* Hero Section */}
         <section className="hero">
           <div className="hero-content">
-            <div className="hero-badge">🚀 The Future of Freelancing</div>
+            <div className="hero-badge">
+              Trusted by freelancers & clients
+            </div>
             <h1 className="hero-title">
-              Get Paid <span>Every Time</span> — No Excuses
+              <span className="accent">The trust infrastructure</span> for freelance work
             </h1>
             <p className="hero-subtitle">
-              GigPay uses escrow to hold client payments safely until you deliver. No chasing. No fake alerts. No arguments. Just instant payment to your bank.
+              Secure escrow payments that give freelancers peace of mind and clients confidence. Get paid on time, every time.
             </p>
             <div className="hero-cta">
               <Link href="/signup" className="btn-primary">
-                Start Earning Today
-                <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: '16px', height: '16px' }}>
-                  <path d="M7 10h12M17 6l4 4m-4 4l4-4"/>
-                </svg>
+                Get Started
               </Link>
-              <a href="#features" className="btn-secondary">
+              <Link href="#features" className="btn-secondary">
                 Learn More
-              </a>
+              </Link>
             </div>
           </div>
         </section>
 
         {/* Features Section */}
         <section id="features" className="features">
-          <h2 className="section-title">Why Choose GigPay?</h2>
+          <div className="section-label">Why GigPay</div>
+          <h2 className="section-title">Secure escrow payments for modern gig workers</h2>
           <div className="features-grid">
             <div className="feature-card">
-              <div className="feature-icon">🔐</div>
-              <h3 className="feature-title">Escrow Protection</h3>
-              <p className="feature-desc">Your payment is held securely by Payaza until you deliver. Zero risk, pure confidence.</p>
+              <div className="feature-icon">🔒</div>
+              <h3 className="feature-title">Funds Secured Upfront</h3>
+              <p className="feature-desc">Client payments are locked in escrow before you start work. Never worry about unpaid invoices again.</p>
             </div>
             <div className="feature-card">
               <div className="feature-icon">⚡</div>
               <h3 className="feature-title">Instant Payouts</h3>
-              <p className="feature-desc">Deliver your work and get paid in minutes. Your money lands directly in your bank account.</p>
+              <p className="feature-desc">Receive funds instantly to your bank account after project completion and approval.</p>
             </div>
             <div className="feature-card">
               <div className="feature-icon">📊</div>
-              <h3 className="feature-title">Income History</h3>
-              <p className="feature-desc">Build your verified earnings profile. Access microloans and financial services designed for you.</p>
+              <h3 className="feature-title">Complete Transparency</h3>
+              <p className="feature-desc">Track every transaction, milestone, and payment in real-time with our dashboard.</p>
             </div>
             <div className="feature-card">
-              <div className="feature-icon">💬</div>
-              <h3 className="feature-title">Client Ratings</h3>
-              <p className="feature-desc">See who pays on time. Protect yourself from bad clients before you invest any work.</p>
-            </div>
-            <div className="feature-card">
-              <div className="feature-icon">🎯</div>
-              <h3 className="feature-title">Milestone Payments</h3>
-              <p className="feature-desc">Split big projects into stages. Get paid 30% upfront, 40% at midpoint, 30% on delivery.</p>
-            </div>
-            <div className="feature-card">
-              <div className="feature-icon">📱</div>
-              <h3 className="feature-title">QR Code Payments</h3>
-              <p className="feature-desc">Show a QR code in person. Clients scan it, pay instantly. No links. No WhatsApp. Done.</p>
+              <div className="feature-icon">🌍</div>
+              <h3 className="feature-title">Made for Africa</h3>
+              <p className="feature-desc">Built specifically for Nigeria&apos;s growing gig economy with local payment methods.</p>
             </div>
           </div>
         </section>
 
         {/* Stats Section */}
-        <section id="how-it-works" className="stats">
+        <section id="stats" className="stats">
           <div className="stats-grid">
             <div className="stat-item">
               <div className="stat-number">30M+</div>
-              <div className="stat-label">Gig Workers in Africa</div>
+              <div className="stat-label">Gig Workers</div>
             </div>
             <div className="stat-item">
-              <div className="stat-number">₦0</div>
-              <div className="stat-label">Hidden Charges</div>
+              <div className="stat-number">₦2T+</div>
+              <div className="stat-label">Annual Gig Economy</div>
             </div>
             <div className="stat-item">
-              <div className="stat-number">&lt;5 min</div>
-              <div className="stat-label">Payout Time</div>
+              <div className="stat-number">85%</div>
+              <div className="stat-label">Payment Delays Eliminated</div>
             </div>
           </div>
         </section>
 
         {/* How It Works */}
-        <section className="features" style={{ paddingTop: '60px', paddingBottom: '60px' }}>
-          <h2 className="section-title">How It Works</h2>
-          <div className="features-grid">
-            <div className="feature-card">
-              <div className="feature-icon">1️⃣</div>
-              <h3 className="feature-title">Create Your Gig</h3>
-              <p className="feature-desc">Write a job title, set your rate, add details. Our AI helps write a professional brief.</p>
+        <section id="how" className="how-section">
+          <div className="section-label">The Process</div>
+          <h2 className="section-title">Freelance payments, reinvented with trust</h2>
+          <div className="steps-grid">
+            <div className="step-card">
+              <div className="step-number">1</div>
+              <h3 className="step-title">Create Project</h3>
+              <p className="step-desc">Post your project details and scope of work.</p>
             </div>
-            <div className="feature-card">
-              <div className="feature-icon">2️⃣</div>
-              <h3 className="feature-title">Share the Link</h3>
-              <p className="feature-desc">Copy your payment link or scan the QR code. Send it to your client on WhatsApp.</p>
+            <div className="step-card">
+              <div className="step-number">2</div>
+              <h3 className="step-title">Secure Payment</h3>
+              <p className="step-desc">Client funds are held securely in escrow.</p>
             </div>
-            <div className="feature-card">
-              <div className="feature-icon">3️⃣</div>
-              <h3 className="feature-title">Client Pays</h3>
-              <p className="feature-desc">They click the link, pay via card, bank transfer, or USSD. Money goes into escrow.</p>
+            <div className="step-card">
+              <div className="step-number">3</div>
+              <h3 className="step-title">Deliver Work</h3>
+              <p className="step-desc">Complete your project with confidence and security.</p>
             </div>
-            <div className="feature-card">
-              <div className="feature-icon">4️⃣</div>
-              <h3 className="feature-title">You Deliver</h3>
-              <p className="feature-desc">Start work confidently. The money is guaranteed. No chasing. Just deliver.</p>
-            </div>
-            <div className="feature-card">
-              <div className="feature-icon">5️⃣</div>
-              <h3 className="feature-title">Get Paid</h3>
-              <p className="feature-desc">Mark it delivered. Money lands in your bank instantly. Repeat forever.</p>
-            </div>
-            <div className="feature-card">
-              <div className="feature-icon">🎁</div>
-              <h3 className="feature-title">Build Credit</h3>
-              <p className="feature-desc">Every job you complete is recorded. Soon: loans, investments, financial freedom.</p>
+            <div className="step-card">
+              <div className="step-number">4</div>
+              <h3 className="step-title">Get Paid</h3>
+              <p className="step-desc">Receive payment instantly after approval.</p>
             </div>
           </div>
         </section>
 
         {/* CTA Section */}
-        <section className="cta-section">
-          <h2 className="cta-title">Stop Chasing. Start Getting Paid.</h2>
-          <p className="cta-subtitle">Join thousands of Nigerian freelancers who are already earning confidently with GigPay.</p>
+        <section id="cta" className="cta-section">
+          <h2 className="cta-title">Africa&apos;s secure payment layer for freelancers</h2>
+          <p className="cta-desc">
+            GigPay helps freelancers work with confidence by securing client payments upfront and releasing funds instantly after work is delivered.
+          </p>
           <div className="cta-buttons">
             <Link href="/signup" className="btn-primary">
-              Create Account Free
+              Start Earning Securely
             </Link>
-            <a href="mailto:support@gigpay.app" className="btn-secondary">
-              Contact Support
-            </a>
+            <Link href="/demo" className="btn-secondary">
+              Watch Demo
+            </Link>
           </div>
         </section>
 
         {/* Footer */}
         <footer className="footer">
           <div className="footer-content">
-            <div>
-              <h3>GigPay</h3>
-              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '14px' }}>Escrow payments for gig workers. No risk. Just work.</p>
-            </div>
-            <div>
-              <h3>Product</h3>
-              <a href="#features" className="footer-link">Features</a>
-              <a href="#how-it-works" className="footer-link">How It Works</a>
+            <div className="footer-section">
+              <h4>Product</h4>
+              <a href="#" className="footer-link">Features</a>
               <a href="#" className="footer-link">Pricing</a>
+              <a href="#" className="footer-link">Security</a>
+              <a href="#" className="footer-link">Updates</a>
             </div>
-            <div>
-              <h3>Company</h3>
+            <div className="footer-section">
+              <h4>Company</h4>
               <a href="#" className="footer-link">About</a>
               <a href="#" className="footer-link">Blog</a>
               <a href="#" className="footer-link">Careers</a>
+              <a href="#" className="footer-link">Contact</a>
             </div>
-            <div>
-              <h3>Legal</h3>
+            <div className="footer-section">
+              <h4>Resources</h4>
+              <a href="#" className="footer-link">Help Center</a>
+              <a href="#" className="footer-link">Community</a>
+              <a href="#" className="footer-link">API Docs</a>
+              <a href="#" className="footer-link">Status</a>
+            </div>
+            <div className="footer-section">
+              <h4>Legal</h4>
               <a href="#" className="footer-link">Privacy</a>
               <a href="#" className="footer-link">Terms</a>
-              <a href="#" className="footer-link">Security</a>
+              <a href="#" className="footer-link">Compliance</a>
+              <a href="#" className="footer-link">Disputes</a>
             </div>
           </div>
           <div className="footer-bottom">
-            <p>© 2026 GigPay. Powered by Payaza. All rights reserved.</p>
+            <p>&copy; 2024 GigPay. All rights reserved.</p>
+            <div style={{ display: 'flex', gap: '20px' }}>
+              <a href="#" style={{ color: '#999', textDecoration: 'none' }}>Twitter</a>
+              <a href="#" style={{ color: '#999', textDecoration: 'none' }}>LinkedIn</a>
+              <a href="#" style={{ color: '#999', textDecoration: 'none' }}>Instagram</a>
+            </div>
           </div>
         </footer>
       </div>
