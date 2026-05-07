@@ -39,29 +39,23 @@ function PayInner() {
 
   // ✅ FIXED: Redirect to Payaza's hosted checkout
   async function handlePayWithPayaza() {
-    if (!job) return
-    
-    try {
-      console.log('Opening Payaza checkout for job:', job.id)
-      
-      // Build Payaza checkout URL
-      // Format: https://checkout.payaza.africa/?merchant_key=YOUR_KEY&amount=1000&reference=unique_ref
-      const payazaUrl = new URL('https://checkout.payaza.africa/')
-      payazaUrl.searchParams.append('merchant_key', process.env.NEXT_PUBLIC_PAYAZA_PUBLIC_KEY)
-      payazaUrl.searchParams.append('amount', Number(job.amount))
-      payazaUrl.searchParams.append('currency', 'NGN')
-      payazaUrl.searchParams.append('reference', job.payaza_reference || job.id)
-      payazaUrl.searchParams.append('customer_email', job.client_email || 'client@gigpay.app')
-      payazaUrl.searchParams.append('customer_name', job.client_name || 'Client')
-      payazaUrl.searchParams.append('description', job.title)
-      
-      // Redirect to Payaza checkout
-      window.location.href = payazaUrl.toString()
-    } catch (err) {
-      console.error('Payment error:', err)
-      alert('Payment error: ' + err.message)
-    }
-  }
+  if (!job) return
+
+  const params = new URLSearchParams({
+    merchant_key: process.env.NEXT_PUBLIC_PAYAZA_PUBLIC_KEY,
+    amount: String(Number(job.amount)),
+    currency: 'NGN',
+    reference: job.payaza_reference || job.id,
+    customer_email: job.client_email || 'client@gigpay.app',
+    customer_name: job.client_name || 'Client',
+    description: job.title,
+    callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/pay/${job.id}?paid=true`
+  })
+
+  const checkoutUrl = `https://checkout.payaza.africa/?${params.toString()}`
+  console.log('Opening:', checkoutUrl)
+  window.open(checkoutUrl, '_blank')
+}
 
   const displayAmount = job ? Number(job.amount) : 0
 
