@@ -14,6 +14,7 @@ function PayInner() {
   const [loading, setLoading] = useState(true)
   const [paid, setPaid] = useState(false)
   const [paying, setPaying] = useState(false)
+  const [sdkLoaded, setSdkLoaded] = useState(false) // ✅ ADDED
 
   useEffect(() => {
     if (!id) return
@@ -21,6 +22,7 @@ function PayInner() {
     console.log('Key:', process.env.NEXT_PUBLIC_PAYAZA_PUBLIC_KEY)
     if (searchParams.get('paid') === 'true') setPaid(true)
     loadJob()
+    loadPayazaSdk() // ✅ Load SDK on mount
   }, [id])
 
   async function loadJob() {
@@ -40,37 +42,73 @@ function PayInner() {
     }
   }
 
+  // ✅ FIXED: Properly load SDK from correct URL
+  async function loadPayazaSdk() {
+    if (window.PayazaCheckout) {
+      console.log('✅ Payaza SDK already loaded')
+      setSdkLoaded(true)
+      return
+    }
+
+    console.log('📦 Attempting to load Payaza SDK from CDN...')
+    
+    const urls = [
+      'https://checkout.payaza.africa/js/payaza-checkout.js', // Primary (correct)
+      'https://cdn.payaza.africa/checkout/payaza-checkout.js'   // Fallback
+    ]
+
+    for (const url of urls) {
+      try {
+        await new Promise((resolve, reject) => {
+          const script = document.createElement('script')
+          script.src = url
+          script.type = 'text/javascript'
+          script.async = true
+          
+          script.onload = () => {
+            console.log(`✅ Payaza SDK loaded from: ${url}`)
+            if (window.PayazaCheckout) {
+              console.log('✅ PayazaCheckout available on window')
+              setSdkLoaded(true)
+              resolve()
+            } else {
+              reject(new Error('PayazaCheckout not found on window'))
+            }
+          }
+          
+          script.onerror = () => {
+            console.warn(`⚠️ Failed to load from ${url}`)
+            reject(new Error(`Failed to load from ${url}`))
+          }
+          
+          document.head.appendChild(script)
+        })
+        return // Success, exit function
+      } catch (err) {
+        console.error(err.message)
+        // Continue to next URL
+      }
+    }
+
+    // All URLs failed
+    console.error('❌ Failed to load Payaza SDK from all CDN URLs')
+    setSdkLoaded(false)
+  }
+
   async function handlePayWithPayaza() {
-    console.log('Starting Payaza payment...')
-    console.log('Key:', process.env.NEXT_PUBLIC_PAYAZA_PUBLIC_KEY)
-    console.log('Job:', job)
+    console.log('🚀 Starting Payaza payment...')
+    
+    if (!sdkLoaded || !window.PayazaCheckout) {
+      alert('❌ Payaza SDK is still loading. Please wait and try again.')
+      console.error('SDK not ready. sdkLoaded:', sdkLoaded, 'window.PayazaCheckout:', !!window.PayazaCheckout)
+      return
+    }
+
     if (!job || paying) return
     setPaying(true)
 
     try {
-      // Load Payaza script dynamically if not already loaded
-      await new Promise((resolve, reject) => {
-        if (window.PayazaCheckout) { 
-          console.log('Payaza SDK already loaded')
-          resolve()
-          return 
-        }
-        console.log('Loading Payaza SDK...')
-        const script = document.createElement('script')
-        script.src = 'https://cdn.payaza.africa/checkout/payaza-checkout.js'
-        script.onload = () => {
-          console.log('Payaza SDK loaded successfully')
-          resolve()
-        }
-        script.onerror = () => {
-          console.error('Failed to load Payaza SDK')
-          reject(new Error('Failed to load Payaza SDK'))
-        }
-        document.head.appendChild(script)
-      })
-
-      // ✅ FIXED: Use correct Payaza SDK methods
-      console.log('Setting up Payaza checkout...')
+      console.log('⚙️ Setting up Payaza checkout...')
       
       window.PayazaCheckout.setup({
         key: process.env.NEXT_PUBLIC_PAYAZA_PUBLIC_KEY,
@@ -83,26 +121,26 @@ function PayInner() {
         currency: 'NGN',
         reference: job.payaza_reference || job.id,
         onClose: function() {
-          console.log('Payaza checkout closed')
+          console.log('⏹️ Payaza checkout closed')
           setPaying(false)
         },
         onSuccess: function(response) {
-          console.log('Payaza payment successful:', response)
+          console.log('✅ Payaza payment successful:', response)
           setPaid(true)
           setPaying(false)
         },
         onError: function(error) {
-          console.error('Payaza payment error:', error)
+          console.error('❌ Payaza payment error:', error)
           setPaying(false)
           alert('Payment failed: ' + (error?.message || 'Unknown error'))
         }
       })
 
-      console.log('Opening Payaza iframe...')
+      console.log('🔓 Opening Payaza iframe...')
       window.PayazaCheckout.openIframe()
 
     } catch (err) {
-      console.error('Payaza checkout error:', err)
+      console.error('❌ Payaza checkout error:', err)
       setPaying(false)
       alert('Payment setup error: ' + err.message)
     }
@@ -213,22 +251,22 @@ function PayInner() {
 
         <button
           onClick={handlePayWithPayaza}
-          disabled={paying}
+          disabled={paying || !sdkLoaded}
           style={{
             width: '100%',
-            background: paying ? 'rgba(201,168,76,0.35)' : GOLD,
+            background: (paying || !sdkLoaded) ? 'rgba(201,168,76,0.35)' : GOLD,
             color: '#1a1209',
             border: 'none',
             borderRadius: '20px',
             padding: '20px',
             fontSize: '16px',
             fontWeight: 700,
-            cursor: paying ? 'not-allowed' : 'pointer',
+            cursor: (paying || !sdkLoaded) ? 'not-allowed' : 'pointer',
             textTransform: 'uppercase',
             letterSpacing: '0.05em'
           }}
         >
-          {paying ? 'Loading Payaza...' : 'Pay ₦' + displayAmount.toLocaleString() + ' Now'}
+          {!sdkLoaded ? '⏳ Loading Payment System...' : paying ? 'Processing...' : 'Pay ₦' + displayAmount.toLocaleString() + ' Now'}
         </button>
 
         {job.virtual_account_number && (
