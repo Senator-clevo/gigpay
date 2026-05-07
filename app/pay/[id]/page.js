@@ -52,25 +52,22 @@ function PayInner() {
     const publicKey = process.env.NEXT_PUBLIC_PAYAZA_PUBLIC_KEY || 'PZ78-PKTEST-93987866-9EF7-4D96-8BF2-9F1EF818286C'
 
     const launchCheckoutUrl = () => {
-      const params = new URLSearchParams({
-        merchant_key: publicKey,
-        amount: String(amount),
-        currency: 'NGN',
-        email,
-        first_name: firstName,
-        last_name: lastName,
-        reference,
-        description,
-        callback_url: callbackUrl
-      })
+  const params = new URLSearchParams({
+    merchant_key: publicKey,
+    amount: String(amount),
+    currency: 'NGN',
+    email,
+    first_name: firstName,
+    last_name: lastName,
+    reference,
+    description,
+    callback_url: callbackUrl
+  })
 
-      const checkoutUrl = `https://checkout.payaza.africa/?${params.toString()}`
-      const popup = window.open(checkoutUrl, '_blank', 'noopener,noreferrer')
-      if (!popup) {
-        window.location.assign(checkoutUrl)
-      }
-      setPaying(false)
-    }
+  const checkoutUrl = `https://checkout.payaza.africa/?${params.toString()}`
+  // Always redirect in same tab — no popup blocking issues
+  window.location.href = checkoutUrl
+}
 
     const script = document.createElement('script')
     script.src = 'https://js.payaza.africa/inline.js'
