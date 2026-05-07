@@ -38,14 +38,29 @@ function PayInner() {
     }
   }
 
-  async function handlePayWithPayaza() {
+async function handlePayWithPayaza() {
   if (!job || paying) return
   setPaying(true)
 
   try {
-    const { PayazaCheckout } = await import('payaza-web-sdk')
+    const PayazaModule = await import('payaza-web-sdk')
+    console.log('Payaza module exports:', Object.keys(PayazaModule))
 
-    PayazaCheckout.init({
+    // Try all possible export names
+    const PayazaCheckout = 
+      PayazaModule.PayazaCheckout ||
+      PayazaModule.default ||
+      PayazaModule.Payaza ||
+      PayazaModule.checkout ||
+      null
+
+    if (!PayazaCheckout) {
+      throw new Error('Could not find PayazaCheckout in module. Available: ' + Object.keys(PayazaModule).join(', '))
+    }
+
+    const initFn = PayazaCheckout.init || PayazaCheckout.setup || PayazaCheckout
+
+    initFn({
       merchant_key: 'PZ78-PKTEST-93987866-9EF7-4D96-8BF2-9F1EF818286C',
       amount: Number(job.amount),
       currency_code: 'NGN',
