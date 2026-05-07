@@ -42,35 +42,29 @@ function PayInner() {
     if (!job || paying) return
     setPaying(true)
 
-    const script = document.createElement('script')
-    script.src = 'https://js.payaza.africa/inline.js'
-    script.async = true
-    script.onload = () => {
-      const shouldUseCheckout = window.PayazaCheckout && typeof window.PayazaCheckout.init === 'function'
-      if (!shouldUseCheckout) {
-        console.error('Payaza checkout script did not expose PayazaCheckout')
-        setPaying(false)
-        return
-      }
+    const amount = job.amount * 100 // kobo
+    const email = job.client_email || 'client@gigpay.app'
+    const firstName = (job.client_name || 'Client').split(' ')[0]
+    const lastName = (job.client_name || 'User').split(' ')[1] || 'User'
+    const reference = job.payaza_reference || job.id
+    const description = job.title
+    const callbackUrl = `${window.location.origin}/pay/${job.id}?paid=true`
 
-      const confirmPayment = (ref) => {
-        setPaid(true)
-        setPaying(false)
-      }
+    const params = new URLSearchParams({
+      merchant_key: process.env.NEXT_PUBLIC_PAYAZA_PUBLIC_KEY || 'PZ78-PKTEST-93987866-9EF7-4D96-8BF2-9F1EF818286C',
+      amount: String(amount),
+      currency: 'NGN',
+      email,
+      first_name: firstName,
+      last_name: lastName,
+      reference,
+      description,
+      callback_url: callbackUrl
+    })
 
-      window.PayazaCheckout.init({
-        amount: job.amount * 100, // convert to kobo for Payaza
-        email: job.client_email || 'client@gigpay.app',
-        reference: job.payaza_reference || job.id,
-        onSuccess: confirmPayment
-      })
-    }
-    script.onerror = () => {
-      console.error('Failed to load Payaza checkout script')
-      setPaying(false)
-    }
-
-    document.head.appendChild(script)
+    const checkoutUrl = `https://checkout.payaza.africa/?${params.toString()}`
+    window.open(checkoutUrl, '_blank')
+    setPaying(false) // Allow user to close and come back
   }
 
 
