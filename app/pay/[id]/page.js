@@ -53,23 +53,16 @@ function PayInner() {
         return
       }
 
-      const amount = Number(job.amount) / 100
+      const confirmPayment = (ref) => {
+        setPaid(true)
+        setPaying(false)
+      }
 
       window.PayazaCheckout.init({
-        merchant_key: process.env.NEXT_PUBLIC_PAYAZA_PUBLIC_KEY || 'PZ78-PKTEST-93987866-9EF7-4D96-8BF2-9F1EF818286C',
-        amount,
-        currency_code: 'NGN',
+        amount: job.amount * 100, // convert to kobo for Payaza
         email: job.client_email || 'client@gigpay.app',
-        first_name: (job.client_name || 'Client').split(' ')[0],
-        last_name: (job.client_name || 'User').split(' ')[1] || 'User',
         reference: job.payaza_reference || job.id,
-        description: job.title,
-        callback(response) {
-          setPaying(false)
-          if (response?.status === 'successful' || response?.status === 'SUCCESSFUL') {
-            setPaid(true)
-          }
-        }
+        onSuccess: confirmPayment
       })
     }
     script.onerror = () => {
@@ -80,7 +73,8 @@ function PayInner() {
     document.head.appendChild(script)
   }
 
-  const displayAmount = job ? Number(job.amount) / 100 : 0
+
+  const displayAmount = job ? Number(job.amount) : 0
 
   if (loading) {
     return (

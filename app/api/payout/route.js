@@ -22,7 +22,7 @@ export async function POST(request) {
 
     // Send payout via Payaza
     const payout = await sendPayout(
-      netAmount,
+      netAmount * 100, // convert to kobo
       job.users.bank_code,
       job.users.account_number,
       `GigPay payout - ${job.title}`
