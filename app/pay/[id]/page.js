@@ -49,22 +49,60 @@ function PayInner() {
     const reference = job.payaza_reference || job.id
     const description = job.title
     const callbackUrl = `${window.location.origin}/pay/${job.id}?paid=true`
+    const publicKey = process.env.NEXT_PUBLIC_PAYAZA_PUBLIC_KEY || 'PZ78-PKTEST-93987866-9EF7-4D96-8BF2-9F1EF818286C'
 
-    const params = new URLSearchParams({
-      merchant_key: process.env.NEXT_PUBLIC_PAYAZA_PUBLIC_KEY || 'PZ78-PKTEST-93987866-9EF7-4D96-8BF2-9F1EF818286C',
-      amount: String(amount),
-      currency: 'NGN',
-      email,
-      first_name: firstName,
-      last_name: lastName,
-      reference,
-      description,
-      callback_url: callbackUrl
-    })
+    const launchCheckoutUrl = () => {
+      const params = new URLSearchParams({
+        merchant_key: publicKey,
+        amount: String(amount),
+        currency: 'NGN',
+        email,
+        first_name: firstName,
+        last_name: lastName,
+        reference,
+        description,
+        callback_url: callbackUrl
+      })
 
-    const checkoutUrl = `https://checkout.payaza.africa/?${params.toString()}`
-    window.open(checkoutUrl, '_blank')
-    setPaying(false) // Allow user to close and come back
+      const checkoutUrl = `https://checkout.payaza.africa/?${params.toString()}`
+      const popup = window.open(checkoutUrl, '_blank', 'noopener,noreferrer')
+      if (!popup) {
+        window.location.assign(checkoutUrl)
+      }
+      setPaying(false)
+    }
+
+    const script = document.createElement('script')
+    script.src = 'https://js.payaza.africa/inline.js'
+    script.async = true
+    script.onload = () => {
+      if (window.PayazaCheckout && typeof window.PayazaCheckout.init === 'function') {
+        window.PayazaCheckout.init({
+          merchant_key: publicKey,
+          amount,
+          currency_code: 'NGN',
+          email,
+          first_name: firstName,
+          last_name: lastName,
+          reference,
+          description,
+          callback(response) {
+            setPaying(false)
+            if (response?.status === 'successful' || response?.status === 'SUCCESSFUL') {
+              setPaid(true)
+            }
+          }
+        })
+        return
+      }
+      launchCheckoutUrl()
+    }
+    script.onerror = () => {
+      console.error('Failed to load Payaza SDK, falling back to checkout URL')
+      launchCheckoutUrl()
+    }
+
+    document.head.appendChild(script)
   }
 
 
