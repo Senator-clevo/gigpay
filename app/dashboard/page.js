@@ -17,6 +17,7 @@ export default function Dashboard() {
   const [payoutLoading, setPayoutLoading] = useState(false)
   const [pin, setPin] = useState('')
   const [pinError, setPinError] = useState('')
+  const [fundedNotification, setFundedNotification] = useState(null)
 
   useEffect(() => {
   
@@ -37,7 +38,31 @@ export default function Dashboard() {
       setLoading(false)
     }
     loadData()
-  }, [])
+
+    const channel = supabase
+    .channel('jobs-changes')
+    .on(
+      'postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'jobs' },
+      (payload) => {
+        console.log('Job updated:', payload.new)
+        // Update the job in state if it belongs to this worker
+        setJobs(prev => prev.map(j => 
+          j.id === payload.new.id ? { ...j, ...payload.new } : j
+        ))
+        // Show notification if job just got funded
+        if (payload.new.status === 'funded') {
+          setFundedNotification(payload.new.title)
+          setTimeout(() => setFundedNotification(null), 5000)
+        }
+      }
+    )
+    .subscribe()
+
+  // Cleanup on unmount
+  return () => supabase.removeChannel(channel)
+}, [])
+  
 
   async function handleLogout() {
     await supabase.auth.signOut()
@@ -279,7 +304,10 @@ export default function Dashboard() {
         /* Skeleton */
         .gp-skeleton { background: rgba(255,255,255,0.05); border-radius: 12px; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
-
+        @keyframes slideDown {
+  from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
         @media (max-width: 768px) {
           .gp-main { padding: 24px 20px; }
           .gp-header { padding: 16px 20px; }
@@ -290,6 +318,18 @@ export default function Dashboard() {
       `}</style>
 
       <div className="gp-dash-root">
+        {fundedNotification && (
+  <div style={{
+    position: 'fixed', top: '80px', left: '50%', transform: 'translateX(-50%)',
+    background: 'linear-gradient(135deg, #00ff88, #00cc66)',
+    color: '#0a1a0f', padding: '16px 24px', borderRadius: '16px',
+    fontWeight: 700, fontSize: '14px', zIndex: 9999,
+    boxShadow: '0 8px 32px rgba(0,255,136,0.4)',
+    animation: 'slideDown 0.3s ease'
+  }}>
+    💰 Payment received! "{fundedNotification}" is now funded and in escrow.
+  </div>
+)}
         <div className="gp-orb gp-orb-1" />
         <div className="gp-orb gp-orb-2" />
         <div className="gp-orb gp-orb-3" />
