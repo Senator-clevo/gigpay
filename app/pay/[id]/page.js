@@ -42,26 +42,16 @@ async function handlePayWithPayaza() {
   if (!job || paying) return
   setPaying(true)
 
-  const existingScript = document.getElementById('payaza-bundle')
-  if (existingScript) existingScript.remove()
+  try {
+    const module = await import('@payaza/web-sdk')
+    const PayazaCheckout = module.default || module.PayazaCheckout
 
-  const script = document.createElement('script')
-  script.id = 'payaza-bundle'
-  script.src = 'https://checkout.payaza.africa/js/v1/bundle.js'
-  script.defer = true
+    console.log('Module keys:', Object.keys(module))
+    console.log('PayazaCheckout:', typeof PayazaCheckout)
 
-  script.onload = function() {
-    console.log('Payaza bundle loaded, PayazaCheckout:', typeof window.PayazaCheckout)
-    
-    if (!window.PayazaCheckout) {
-      setPaying(false)
-      alert('PayazaCheckout not available')
-      return
-    }
-
-    const payazaCheckout = window.PayazaCheckout.setup({
+    const data = {
       merchant_key: 'PZ78-PKTEST-93987866-9EF7-4D96-8BF2-9F1EF818286C',
-      connection_mode: window.PayazaCheckout.TEST_CONNECTION_MODE,
+      connection_mode: 'test',
       checkout_amount: Number(job.amount),
       currency_code: 'NGN',
       email_address: job.client_email || 'client@gigpay.app',
@@ -70,7 +60,7 @@ async function handlePayWithPayaza() {
       last_name: (job.client_name || 'User').split(' ')[1] || 'User',
       transaction_reference: job.payaza_reference || job.id,
       onClose: function() {
-        console.log('Checkout closed')
+        console.log('Closed')
         setPaying(false)
       },
       callback: function(callbackResponse) {
@@ -84,17 +74,29 @@ async function handlePayWithPayaza() {
         }
         setPaying(false)
       }
-    })
+    }
 
-    payazaCheckout.showPopup()
-  }
+    // Try both ways the docs show
+    let checkout
+    if (typeof PayazaCheckout === 'function') {
+      checkout = new PayazaCheckout(data)
+    } else if (PayazaCheckout && typeof PayazaCheckout.setup === 'function') {
+      checkout = PayazaCheckout.setup(data)
+    } else if (module.setup && typeof module.setup === 'function') {
+      checkout = module.setup(data)
+    } else {
+      throw new Error('Cannot find PayazaCheckout constructor. Keys: ' + Object.keys(module).join(', '))
+    }
 
-  script.onerror = function(e) {
-    console.error('Failed to load Payaza bundle:', e)
+    console.log('Checkout instance:', checkout)
+    checkout.showPopup()
+
+  } catch (err) {
+    console.error('Payaza error:', err)
     setPaying(false)
-    alert('Payment gateway failed to load. Please check your connection and try again.')
+    alert('Payment error: ' + err.message)
   }
-
+}
   document.head.appendChild(script)
 }
   const displayAmount = job ? Number(job.amount) : 0
