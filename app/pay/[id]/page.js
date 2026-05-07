@@ -43,34 +43,23 @@ async function handlePayWithPayaza() {
   setPaying(true)
 
   try {
-    const PayazaModule = await import('payaza-web-sdk')
-    console.log('Payaza module exports:', Object.keys(PayazaModule))
+    const PayazaCheckout = (await import('@payaza/web-sdk')).default
 
-    // Try all possible export names
-    const PayazaCheckout = 
-      PayazaModule.PayazaCheckout ||
-      PayazaModule.default ||
-      PayazaModule.Payaza ||
-      PayazaModule.checkout ||
-      null
-
-    if (!PayazaCheckout) {
-      throw new Error('Could not find PayazaCheckout in module. Available: ' + Object.keys(PayazaModule).join(', '))
-    }
-
-    const initFn = PayazaCheckout.init || PayazaCheckout.setup || PayazaCheckout
-
-    initFn({
+    const checkout = PayazaCheckout.setup({
       merchant_key: 'PZ78-PKTEST-93987866-9EF7-4D96-8BF2-9F1EF818286C',
-      amount: Number(job.amount),
+      connection_mode: PayazaCheckout.TEST_CONNECTION_MODE,
+      checkout_amount: Number(job.amount),
       currency_code: 'NGN',
-      email: job.client_email || 'client@gigpay.app',
+      email_address: job.client_email || 'client@gigpay.app',
       first_name: (job.client_name || 'Client').split(' ')[0],
       last_name: (job.client_name || 'User').split(' ')[1] || 'User',
-      reference: job.payaza_reference || job.id,
-      description: job.title,
+      transaction_reference: job.payaza_reference || job.id,
+      onClose: function() {
+        console.log('Checkout closed')
+        setPaying(false)
+      },
       callback: function(response) {
-        console.log('Payaza response:', response)
+        console.log('Payaza callback:', response)
         if (
           response?.status === 'successful' ||
           response?.status === 'SUCCESSFUL' ||
@@ -79,11 +68,11 @@ async function handlePayWithPayaza() {
           setPaid(true)
         }
         setPaying(false)
-      },
-      onClose: function() {
-        setPaying(false)
       }
     })
+
+    checkout.showPopup()
+
   } catch (err) {
     console.error('Payaza SDK error:', err)
     setPaying(false)
