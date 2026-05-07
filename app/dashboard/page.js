@@ -35,6 +35,7 @@ export default function Dashboard() {
         .eq('worker_id', user.id)
         .order('created_at', { ascending: false })
       setJobs(jobs || [])
+      console.log('Jobs loaded:', jobs)
       setLoading(false)
     }
     loadData()
