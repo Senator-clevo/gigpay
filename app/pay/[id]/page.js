@@ -21,6 +21,9 @@ function PayInner() {
     loadJob()
   }, [id])
 
+  console.log('Supabase URL set:', !!process.env.NEXT_PUBLIC_SUPABASE_URL)
+
+
   async function loadJob() {
     try {
       const { data: jobData } = await supabase
@@ -50,7 +53,7 @@ function PayInner() {
       console.log('PayazaCheckout type:', typeof PayazaCheckout)
 
       const data = {
-        merchant_key: 'PZ78-PKTEST-93987866-9EF7-4D96-8BF2-9F1EF818286C',
+        merchant_key: process.env.NEXT_PUBLIC_PAYAZA_PUBLIC_KEY,
         connection_mode: 'test',
         checkout_amount: Number(job.amount),
         currency_code: 'NGN',
