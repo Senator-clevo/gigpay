@@ -128,13 +128,30 @@ export default function JobDetail() {
           )}
         </div>
 
-        {/* Copy payment link button */}
-        {job.status === 'awaiting_payment' && (
-          <button onClick={copyLink}
-            style={{ width: '100%', background: copied ? 'rgba(0,255,136,0.15)' : GOLD, border: copied ? '1px solid rgba(0,255,136,0.4)' : 'none', borderRadius: '16px', padding: '18px', fontSize: '15px', fontWeight: 700, color: copied ? '#00ff88' : '#1a1209', cursor: 'pointer', marginBottom: '12px', transition: 'all 0.3s' }}>
-            {copied ? '✅ Link Copied!' : '🔗 Copy Payment Link'}
-          </button>
-        )}
+        {/* QR Code + Copy link */}
+{job.status === 'awaiting_payment' && (
+  <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: '24px', padding: '32px', marginBottom: '16px', textAlign: 'center' }}>
+    <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '20px' }}>
+      Client scans to pay
+    </div>
+    <div style={{ background: '#fff', borderRadius: '16px', padding: '16px', display: 'inline-block', marginBottom: '20px' }}>
+      <QRCodeSVG
+        value={`${typeof window !== 'undefined' ? window.location.origin : ''}/pay/${job.id}`}
+        size={180}
+        bgColor="#ffffff"
+        fgColor="#1a1209"
+        level="H"
+      />
+    </div>
+    <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '20px' }}>
+      or share the link below
+    </div>
+    <button onClick={copyLink}
+      style={{ width: '100%', background: copied ? 'rgba(0,255,136,0.15)' : GOLD, border: copied ? '1px solid rgba(0,255,136,0.4)' : 'none', borderRadius: '16px', padding: '18px', fontSize: '15px', fontWeight: 700, color: copied ? '#00ff88' : '#1a1209', cursor: 'pointer', transition: 'all 0.3s' }}>
+      {copied ? '✅ Link Copied!' : '🔗 Copy Payment Link'}
+    </button>
+  </div>
+)}
 
         <div style={{ textAlign: 'center', fontSize: '11px', color: 'rgba(255,255,255,0.2)', marginTop: '16px' }}>
           Powered by <span style={{ color: '#C9A84C' }}>GigPay</span> × <span style={{ color: '#C9A84C' }}>Payaza</span>
