@@ -443,15 +443,15 @@ export default function Dashboard() {
                       <div className="gp-job-amount">₦{Number(job.amount).toLocaleString()}</div>
                       <div className="gp-job-actions">
                         {job.status === 'funded' && (
-                          <button className="gp-action-btn gp-action-primary" onClick={() => markDelivered(job.id)}>
-                            Mark Delivered
-                          </button>
-                        )}
+  <button className="gp-action-btn gp-action-primary" onClick={(e) => { e.stopPropagation(); markDelivered(job.id) }}>
+    Mark Delivered
+  </button>
+)}
                         {job.status === 'delivered' && (
-                          <button className="gp-action-btn gp-action-primary" onClick={() => openPayoutModal(job.id)}>
-                            Release Payout
-                          </button>
-                        )}
+  <button className="gp-action-btn gp-action-primary" onClick={(e) => { e.stopPropagation(); openPayoutModal(job.id) }}>
+    Release Payout
+  </button>
+)}
                       </div>
                     </div>
                   </div>
