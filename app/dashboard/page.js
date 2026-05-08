@@ -98,6 +98,8 @@ export default function Dashboard() {
     setPayoutLoading(false)
     setShowPinModal(false)
 
+    console.log('Payout response:', data)
+
     if (data.success) {
       setJobs(jobs.map(j => j.id === selectedJobId ? { ...j, status: 'paid_out' } : j))
     }
@@ -484,10 +486,17 @@ export default function Dashboard() {
                   onClick={() => setShowPinModal(false)}>
                   Cancel
                 </button>
-                <button className="flex-1 py-4 rounded-xl font-semibold bg-gradient-to-r from-[#C9A84C] to-[#A67C30] text-[#1a1209]"
-                  onClick={confirmPayout} disabled={payoutLoading}>
-                  {payoutLoading ? 'Processing...' : 'Confirm ₦'}
-                </button>
+                <button 
+  style={{
+    flex: 1, padding: '18px 24px', borderRadius: '16px', fontWeight: 700,
+    fontSize: '16px', border: 'none', cursor: payoutLoading ? 'not-allowed' : 'pointer',
+    background: 'linear-gradient(135deg, #C9A84C 0%, #A67C30 100%)',
+    color: '#1a1209', boxShadow: '0 8px 24px rgba(201,168,76,0.4)',
+    opacity: payoutLoading ? 0.7 : 1
+  }}
+  onClick={confirmPayout} disabled={payoutLoading}>
+  {payoutLoading ? '⏳ Processing...' : '✅ Confirm Payout'}
+</button>
               </div>
             </div>
           </div>
