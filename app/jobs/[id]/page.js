@@ -3,7 +3,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import QRCode from 'qrcode.react'
+import { QRCodeCanvas } from 'qrcode.react'
 
 const GOLD = 'linear-gradient(135deg, #C9A84C, #A67C30)'
 const DARK = 'linear-gradient(155deg, #1a1a1a 0%, #2d2310 55%, #1a1209 100%)'
@@ -136,7 +136,7 @@ export default function JobDetail() {
       Client scans to pay
     </div>
     <div style={{ background: '#fff', borderRadius: '16px', padding: '16px', display: 'inline-block', marginBottom: '20px' }}>
-      <QRCode
+      <QRCodeCanvas
   value={`${typeof window !== 'undefined' ? window.location.origin : ''}/pay/${job.id}`}
   size={180}
   bgColor="#ffffff"
