@@ -101,7 +101,9 @@ export default function Dashboard() {
     console.log('Payout response:', data)
 
     setJobs(jobs.map(j => j.id === selectedJobId ? { ...j, status: 'paid_out' } : j))
+  }
 
+  
   const totalEarned = jobs
     .filter(j => j.status === 'paid_out')
     .reduce((sum, j) => sum + j.amount * 0.985, 0)
