@@ -5,8 +5,8 @@ import Link from 'next/link'
 
 export default function LandingPage() {
   const [isLoaded, setIsLoaded] = useState(false)
-  const [visibleSections, setVisibleSections] = useState<{ [key: string]: boolean }>({})
-  const containerRef = useRef<HTMLDivElement>(null)
+  const [visibleSections, setVisibleSections] = useState({})
+  const containerRef = useRef(null)
 
   useEffect(() => {
     setIsLoaded(true)
@@ -43,9 +43,12 @@ export default function LandingPage() {
           margin: 0;
           padding: 0;
           box-sizing: border-box;
+          max-width: 100%;
         }
 
-        html {
+        html, body {
+          overflow-x: hidden;
+          width: 100%;
           background: #faf8f5;
           scroll-behavior: smooth;
         }
@@ -56,139 +59,64 @@ export default function LandingPage() {
           background: #faf8f5;
         }
 
-        /* ===== MATURE ANIMATIONS ===== */
-        
         @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(40px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+          from { opacity: 0; transform: translateY(40px); }
+          to { opacity: 1; transform: translateY(0); }
         }
 
         @keyframes fadeInDown {
-          from {
-            opacity: 0;
-            transform: translateY(-40px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+          from { opacity: 0; transform: translateY(-40px); }
+          to { opacity: 1; transform: translateY(0); }
         }
 
         @keyframes slideInLeft {
-          from {
-            opacity: 0;
-            transform: translateX(-60px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
+          from { opacity: 0; transform: translateX(-60px); }
+          to { opacity: 1; transform: translateX(0); }
         }
 
         @keyframes slideInRight {
-          from {
-            opacity: 0;
-            transform: translateX(60px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
+          from { opacity: 0; transform: translateX(60px); }
+          to { opacity: 1; transform: translateX(0); }
         }
 
         @keyframes float {
-          0%, 100% {
-            transform: translateY(0px);
-          }
-          50% {
-            transform: translateY(-16px);
-          }
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-16px); }
         }
 
         @keyframes glow {
-          0%, 100% {
-            box-shadow: 0 0 20px rgba(201, 168, 76, 0.3), 0 0 40px rgba(201, 168, 76, 0.1);
-          }
-          50% {
-            box-shadow: 0 0 30px rgba(201, 168, 76, 0.5), 0 0 60px rgba(201, 168, 76, 0.2);
-          }
+          0%, 100% { box-shadow: 0 0 20px rgba(201, 168, 76, 0.3), 0 0 40px rgba(201, 168, 76, 0.1); }
+          50% { box-shadow: 0 0 30px rgba(201, 168, 76, 0.5), 0 0 60px rgba(201, 168, 76, 0.2); }
         }
 
         @keyframes glowText {
-          0%, 100% {
-            text-shadow: 0 0 10px rgba(201, 168, 76, 0.3), 0 0 20px rgba(201, 168, 76, 0.1);
-          }
-          50% {
-            text-shadow: 0 0 20px rgba(201, 168, 76, 0.6), 0 0 30px rgba(201, 168, 76, 0.3);
-          }
+          0%, 100% { text-shadow: 0 0 10px rgba(201, 168, 76, 0.3), 0 0 20px rgba(201, 168, 76, 0.1); }
+          50% { text-shadow: 0 0 20px rgba(201, 168, 76, 0.6), 0 0 30px rgba(201, 168, 76, 0.3); }
         }
 
         @keyframes pulse-glow {
-          0%, 100% {
-            opacity: 1;
-            box-shadow: 0 0 15px rgba(201, 168, 76, 0.2);
-          }
-          50% {
-            opacity: 0.85;
-            box-shadow: 0 0 30px rgba(201, 168, 76, 0.4);
-          }
+          0%, 100% { opacity: 1; box-shadow: 0 0 15px rgba(201, 168, 76, 0.2); }
+          50% { opacity: 0.85; box-shadow: 0 0 30px rgba(201, 168, 76, 0.4); }
         }
 
         @keyframes scale-in {
-          from {
-            opacity: 0;
-            transform: scale(0.93);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
+          from { opacity: 0; transform: scale(0.93); }
+          to { opacity: 1; transform: scale(1); }
         }
 
         @keyframes bounce-in {
-          0% {
-            opacity: 0;
-            transform: translateY(30px) scale(0.9);
-          }
-          60% {
-            opacity: 1;
-          }
-          100% {
-            transform: translateY(0) scale(1);
-          }
-        }
-
-        @keyframes shimmer {
-          0%, 100% {
-            background-position: -1000px 0;
-          }
-          100% {
-            background-position: 1000px 0;
-          }
+          0% { opacity: 0; transform: translateY(30px) scale(0.9); }
+          60% { opacity: 1; }
+          100% { transform: translateY(0) scale(1); }
         }
 
         @keyframes floating-icon {
-          0%, 100% {
-            transform: translateY(0px);
-          }
-          25% {
-            transform: translateY(-8px);
-          }
-          50% {
-            transform: translateY(-12px);
-          }
-          75% {
-            transform: translateY(-6px);
-          }
+          0%, 100% { transform: translateY(0px); }
+          25% { transform: translateY(-8px); }
+          50% { transform: translateY(-12px); }
+          75% { transform: translateY(-6px); }
         }
 
-        /* ===== GRADIENT ORBS ===== */
         .orb {
           position: fixed;
           border-radius: 50%;
@@ -198,36 +126,28 @@ export default function LandingPage() {
         }
 
         .orb-1 {
-          width: 500px;
-          height: 500px;
+          width: 500px; height: 500px;
           background: radial-gradient(circle, rgba(201, 168, 76, 0.25) 0%, transparent 70%);
-          top: -150px;
-          left: -150px;
+          top: -150px; left: -150px;
           animation: float 8s ease-in-out infinite;
         }
 
         .orb-2 {
-          width: 400px;
-          height: 400px;
+          width: 400px; height: 400px;
           background: radial-gradient(circle, rgba(160, 136, 100, 0.18) 0%, transparent 70%);
-          bottom: -100px;
-          right: -100px;
+          bottom: -100px; right: -100px;
           animation: float 10s ease-in-out infinite 1s;
         }
 
         .orb-3 {
-          width: 300px;
-          height: 300px;
+          width: 300px; height: 300px;
           background: radial-gradient(circle, rgba(180, 160, 140, 0.15) 0%, transparent 70%);
-          top: 50%;
-          right: 5%;
+          top: 50%; right: 5%;
           animation: float 12s ease-in-out infinite 2s;
         }
 
-        /* ===== HEADER ===== */
         .header {
-          position: relative;
-          z-index: 50;
+          position: relative; z-index: 50;
           padding: 28px 40px;
           backdrop-filter: blur(10px);
           border-bottom: 1px solid rgba(201, 168, 76, 0.15);
@@ -236,38 +156,25 @@ export default function LandingPage() {
         }
 
         .header-content {
-          max-width: 1400px;
-          margin: 0 auto;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 40px;
+          max-width: 1400px; margin: 0 auto;
+          display: flex; align-items: center;
+          justify-content: space-between; gap: 40px;
         }
 
         .logo {
-          display: flex;
-          align-items: center;
-          gap: 12px;
+          display: flex; align-items: center; gap: 12px;
           text-decoration: none;
-          font-family: 'Syne', sans-serif;
-          font-weight: 700;
-          font-size: 26px;
-          color: #1a1209;
-          transition: all 0.3s ease;
+          font-family: 'Syne', sans-serif; font-weight: 700; font-size: 26px;
+          color: #1a1209; transition: all 0.3s ease;
         }
 
-        .logo:hover {
-          transform: translateX(2px);
-        }
+        .logo:hover { transform: translateX(2px); }
 
         .logo-mark {
-          width: 44px;
-          height: 44px;
+          width: 44px; height: 44px;
           background: linear-gradient(135deg, #c9a84c, #a67c30);
           border-radius: 12px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
+          display: flex; align-items: center; justify-content: center;
           animation: pulse-glow 3s ease-in-out infinite;
           transition: all 0.3s ease;
         }
@@ -277,56 +184,34 @@ export default function LandingPage() {
           box-shadow: 0 8px 24px rgba(201, 168, 76, 0.3);
         }
 
-        .logo-mark svg {
-          width: 22px;
-          height: 22px;
-          fill: white;
-        }
+        .logo-mark svg { width: 22px; height: 22px; fill: white; }
 
         .nav {
-          display: flex;
-          gap: 28px;
-          align-items: center;
+          display: flex; gap: 28px; align-items: center;
           animation: slideInRight 0.8s ease-out;
         }
 
         .nav-link {
-          color: #555;
-          text-decoration: none;
-          font-size: 15px;
-          font-weight: 500;
-          transition: all 0.3s ease;
-          position: relative;
+          color: #555; text-decoration: none;
+          font-size: 15px; font-weight: 500;
+          transition: all 0.3s ease; position: relative;
         }
 
         .nav-link::after {
-          content: '';
-          position: absolute;
-          bottom: -6px;
-          left: 0;
-          width: 0;
-          height: 2px;
+          content: ''; position: absolute;
+          bottom: -6px; left: 0; width: 0; height: 2px;
           background: linear-gradient(90deg, #c9a84c, #a67c30);
           transition: width 0.3s ease;
         }
 
-        .nav-link:hover {
-          color: #c9a84c;
-        }
-
-        .nav-link:hover::after {
-          width: 100%;
-        }
+        .nav-link:hover { color: #c9a84c; }
+        .nav-link:hover::after { width: 100%; }
 
         .btn-header {
           padding: 12px 26px;
           background: linear-gradient(135deg, #c9a84c, #a67c30);
-          color: #fff;
-          border-radius: 12px;
-          text-decoration: none;
-          font-weight: 600;
-          font-size: 14px;
-          transition: all 0.3s ease;
+          color: #fff; border-radius: 12px; text-decoration: none;
+          font-weight: 600; font-size: 14px; transition: all 0.3s ease;
           box-shadow: 0 6px 20px rgba(201, 168, 76, 0.25);
         }
 
@@ -335,16 +220,11 @@ export default function LandingPage() {
           box-shadow: 0 10px 30px rgba(201, 168, 76, 0.35);
         }
 
-        /* ===== HERO SECTION ===== */
         .hero {
-          position: relative;
-          z-index: 10;
+          position: relative; z-index: 10;
           min-height: 100vh;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 80px 40px;
-          text-align: center;
+          display: flex; align-items: center; justify-content: center;
+          padding: 80px 40px; text-align: center;
         }
 
         .hero-content {
@@ -353,30 +233,22 @@ export default function LandingPage() {
         }
 
         .hero-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
+          display: inline-flex; align-items: center; gap: 8px;
           padding: 13px 22px;
           background: rgba(201, 168, 76, 0.12);
           border: 1px solid rgba(201, 168, 76, 0.3);
-          border-radius: 50px;
-          color: #c9a84c;
-          font-size: 12px;
-          font-weight: 600;
-          margin-bottom: 28px;
-          text-transform: uppercase;
-          letter-spacing: 0.08em;
+          border-radius: 50px; color: #c9a84c;
+          font-size: 12px; font-weight: 600; margin-bottom: 28px;
+          text-transform: uppercase; letter-spacing: 0.08em;
           animation: scale-in 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s both;
           backdrop-filter: blur(10px);
         }
 
         .hero-title {
           font-family: 'Syne', sans-serif;
-          font-size: clamp(48px, 9vw, 84px);
-          font-weight: 700;
-          color: #1a1209;
-          margin-bottom: 20px;
-          line-height: 1.05;
+          font-size: clamp(40px, 9vw, 84px);
+          font-weight: 700; color: #1a1209;
+          margin-bottom: 20px; line-height: 1.05;
           animation: fadeInUp 1s ease-out 0.2s both;
           letter-spacing: -0.02em;
         }
@@ -390,121 +262,43 @@ export default function LandingPage() {
         }
 
         .hero-subtitle {
-          font-size: clamp(16px, 2.5vw, 22px);
-          color: #666;
-          margin-bottom: 48px;
+          font-size: clamp(15px, 2.5vw, 22px);
+          color: #666; margin-bottom: 48px;
           line-height: 1.7;
           animation: fadeInUp 1s ease-out 0.3s both;
           font-weight: 400;
         }
 
         .hero-cta {
-          display: flex;
-          gap: 18px;
-          justify-content: center;
-          flex-wrap: wrap;
+          display: flex; gap: 18px;
+          justify-content: center; flex-wrap: wrap;
           animation: fadeInUp 1s ease-out 0.4s both;
         }
 
-        .btn-primary {
-          padding: 20px 44px;
-          background: linear-gradient(135deg, #c9a84c, #a67c30);
-          color: #fff;
-          border: none;
-          border-radius: 16px;
-          font-weight: 700;
-          font-size: 16px;
-          text-decoration: none;
-          display: inline-flex;
-          align-items: center;
-          gap: 10px;
-          cursor: pointer;
-          transition: all 0.3s cubic-bezier(0.77, 0, 0.175, 1);
-          box-shadow: 0 12px 36px rgba(201, 168, 76, 0.3);
-          font-family: 'Inter', sans-serif;
-          position: relative;
-          overflow: hidden;
-        }
-
-        .btn-primary::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: -100%;
-          width: 100%;
-          height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-          transition: left 0.5s ease;
-        }
-
-        .btn-primary:hover::before {
-          left: 100%;
-        }
-
-        .btn-primary:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 20px 50px rgba(201, 168, 76, 0.4);
-        }
-
-        .btn-secondary {
-          padding: 20px 44px;
-          background: transparent;
-          color: #1a1209;
-          border: 2px solid rgba(201, 168, 76, 0.4);
-          border-radius: 16px;
-          font-weight: 700;
-          font-size: 16px;
-          text-decoration: none;
-          display: inline-flex;
-          align-items: center;
-          gap: 10px;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          font-family: 'Inter', sans-serif;
-          position: relative;
-        }
-
-        .btn-secondary:hover {
-          border-color: #c9a84c;
-          background: rgba(201, 168, 76, 0.08);
-          transform: translateY(-5px);
-          box-shadow: 0 10px 30px rgba(201, 168, 76, 0.15);
-        }
-
-        /* ===== FEATURES SECTION ===== */
         .features {
-          position: relative;
-          z-index: 10;
+          position: relative; z-index: 10;
           padding: 120px 40px;
-          max-width: 1400px;
-          margin: 0 auto;
+          max-width: 1400px; margin: 0 auto;
         }
 
         .section-label {
           display: inline-block;
-          font-size: 12px;
-          font-weight: 700;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          color: #c9a84c;
-          margin-bottom: 12px;
-          animation: fadeInUp 0.6s ease-out;
+          font-size: 12px; font-weight: 700;
+          letter-spacing: 0.1em; text-transform: uppercase;
+          color: #c9a84c; margin-bottom: 12px;
         }
 
         .section-title {
           font-family: 'Syne', sans-serif;
-          font-size: clamp(40px, 7vw, 64px);
-          font-weight: 700;
-          color: #1a1209;
-          margin-bottom: 60px;
-          line-height: 1.1;
-          animation: fadeInUp 0.8s ease-out 0.1s both;
+          font-size: clamp(32px, 7vw, 64px);
+          font-weight: 700; color: #1a1209;
+          margin-bottom: 60px; line-height: 1.1;
           letter-spacing: -0.02em;
         }
 
         .features-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
           gap: 32px;
         }
 
@@ -514,38 +308,19 @@ export default function LandingPage() {
           border: 1px solid rgba(201, 168, 76, 0.15);
           border-radius: 20px;
           transition: all 0.4s cubic-bezier(0.77, 0, 0.175, 1);
-          position: relative;
-          overflow: hidden;
+          position: relative; overflow: hidden;
           backdrop-filter: blur(10px);
-        }
-
-        .features .feature-card {
           animation: fadeInUp 1s ease-out both;
         }
 
-        .feature-card:nth-child(1) {
-          animation-delay: 0.1s;
-        }
-
-        .feature-card:nth-child(2) {
-          animation-delay: 0.2s;
-        }
-
-        .feature-card:nth-child(3) {
-          animation-delay: 0.3s;
-        }
-
-        .feature-card:nth-child(4) {
-          animation-delay: 0.4s;
-        }
+        .feature-card:nth-child(1) { animation-delay: 0.1s; }
+        .feature-card:nth-child(2) { animation-delay: 0.2s; }
+        .feature-card:nth-child(3) { animation-delay: 0.3s; }
+        .feature-card:nth-child(4) { animation-delay: 0.4s; }
 
         .feature-card::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          height: 2px;
+          content: ''; position: absolute;
+          top: 0; left: 0; right: 0; height: 2px;
           background: linear-gradient(90deg, transparent, rgba(201, 168, 76, 0.4), transparent);
         }
 
@@ -557,15 +332,11 @@ export default function LandingPage() {
         }
 
         .feature-icon {
-          width: 70px;
-          height: 70px;
+          width: 70px; height: 70px;
           background: linear-gradient(135deg, rgba(201, 168, 76, 0.15), rgba(160, 136, 100, 0.1));
           border-radius: 18px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 36px;
-          margin-bottom: 24px;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 36px; margin-bottom: 24px;
           transition: all 0.3s ease;
           animation: floating-icon 3s ease-in-out infinite;
         }
@@ -577,47 +348,33 @@ export default function LandingPage() {
         }
 
         .feature-title {
-          font-size: 22px;
-          font-weight: 700;
-          color: #1a1209;
-          margin-bottom: 14px;
-          font-family: 'Syne', sans-serif;
+          font-size: 22px; font-weight: 700; color: #1a1209;
+          margin-bottom: 14px; font-family: 'Syne', sans-serif;
           transition: color 0.3s ease;
         }
 
-        .feature-card:hover .feature-title {
-          color: #c9a84c;
-        }
+        .feature-card:hover .feature-title { color: #c9a84c; }
 
         .feature-desc {
-          font-size: 15px;
-          color: #666;
-          line-height: 1.7;
+          font-size: 15px; color: #666; line-height: 1.7;
           transition: color 0.3s ease;
         }
 
-        .feature-card:hover .feature-desc {
-          color: #555;
-        }
+        .feature-card:hover .feature-desc { color: #555; }
 
-        /* ===== STATS SECTION ===== */
         .stats {
-          position: relative;
-          z-index: 10;
+          position: relative; z-index: 10;
           padding: 100px 40px;
           background: linear-gradient(135deg, rgba(201, 168, 76, 0.08), rgba(160, 136, 100, 0.06));
           border-top: 1px solid rgba(201, 168, 76, 0.15);
           border-bottom: 1px solid rgba(201, 168, 76, 0.15);
-          max-width: 1400px;
-          margin: 0 auto;
-          border-radius: 24px;
+          max-width: 1400px; margin: 0 auto; border-radius: 24px;
         }
 
         .stats-grid {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-          gap: 50px;
-          text-align: center;
+          gap: 50px; text-align: center;
         }
 
         .stat-item {
@@ -625,84 +382,49 @@ export default function LandingPage() {
           transition: all 0.3s ease;
         }
 
-        .stat-item:nth-child(1) {
-          animation-delay: 0.1s;
-        }
-
-        .stat-item:nth-child(2) {
-          animation-delay: 0.2s;
-        }
-
-        .stat-item:nth-child(3) {
-          animation-delay: 0.3s;
-        }
-
-        .stat-item:hover {
-          transform: scale(1.05);
-        }
+        .stat-item:nth-child(1) { animation-delay: 0.1s; }
+        .stat-item:nth-child(2) { animation-delay: 0.2s; }
+        .stat-item:nth-child(3) { animation-delay: 0.3s; }
+        .stat-item:hover { transform: scale(1.05); }
 
         .stat-number {
-          font-family: 'Syne', sans-serif;
-          font-size: 56px;
-          font-weight: 700;
+          font-family: 'Syne', sans-serif; font-size: 56px; font-weight: 700;
           background: linear-gradient(135deg, #c9a84c, #a67c30);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          margin-bottom: 10px;
+          -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+          background-clip: text; margin-bottom: 10px;
           animation: glowText 2s ease-in-out infinite;
         }
 
         .stat-label {
-          font-size: 14px;
-          color: #666;
-          text-transform: uppercase;
-          letter-spacing: 0.06em;
-          font-weight: 600;
+          font-size: 14px; color: #666;
+          text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;
         }
 
-        /* ===== HOW IT WORKS ===== */
         .how-section {
-          position: relative;
-          z-index: 10;
+          position: relative; z-index: 10;
           padding: 120px 40px;
-          max-width: 1400px;
-          margin: 0 auto;
+          max-width: 1400px; margin: 0 auto;
         }
 
         .steps-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+          grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
           gap: 32px;
         }
 
         .step-card {
-          position: relative;
-          padding: 40px 32px;
+          position: relative; padding: 40px 32px;
           background: rgba(255, 255, 255, 0.7);
           border: 1px solid rgba(201, 168, 76, 0.15);
-          border-radius: 16px;
-          text-align: center;
+          border-radius: 16px; text-align: center;
           animation: bounce-in 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-          backdrop-filter: blur(10px);
-          transition: all 0.3s ease;
+          backdrop-filter: blur(10px); transition: all 0.3s ease;
         }
 
-        .step-card:nth-child(1) {
-          animation-delay: 0.1s;
-        }
-
-        .step-card:nth-child(2) {
-          animation-delay: 0.2s;
-        }
-
-        .step-card:nth-child(3) {
-          animation-delay: 0.3s;
-        }
-
-        .step-card:nth-child(4) {
-          animation-delay: 0.4s;
-        }
+        .step-card:nth-child(1) { animation-delay: 0.1s; }
+        .step-card:nth-child(2) { animation-delay: 0.2s; }
+        .step-card:nth-child(3) { animation-delay: 0.3s; }
+        .step-card:nth-child(4) { animation-delay: 0.4s; }
 
         .step-card:hover {
           transform: translateY(-12px);
@@ -711,20 +433,13 @@ export default function LandingPage() {
         }
 
         .step-number {
-          width: 50px;
-          height: 50px;
+          width: 50px; height: 50px;
           background: linear-gradient(135deg, rgba(201, 168, 76, 0.25), rgba(160, 136, 100, 0.15));
           border-radius: 12px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-family: 'Syne', sans-serif;
-          font-size: 24px;
-          font-weight: 700;
-          color: #c9a84c;
-          margin-bottom: 20px;
-          margin-left: auto;
-          margin-right: auto;
+          display: flex; align-items: center; justify-content: center;
+          font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 700;
+          color: #c9a84c; margin-bottom: 20px;
+          margin-left: auto; margin-right: auto;
           transition: all 0.3s ease;
         }
 
@@ -734,180 +449,154 @@ export default function LandingPage() {
         }
 
         .step-title {
-          font-family: 'Syne', sans-serif;
-          font-size: 20px;
-          font-weight: 700;
-          color: #1a1209;
-          margin-bottom: 12px;
-          transition: color 0.3s ease;
+          font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700;
+          color: #1a1209; margin-bottom: 12px; transition: color 0.3s ease;
         }
 
-        .step-card:hover .step-title {
-          color: #c9a84c;
-        }
+        .step-card:hover .step-title { color: #c9a84c; }
+        .step-desc { font-size: 14px; color: #666; line-height: 1.6; }
 
-        .step-desc {
-          font-size: 14px;
-          color: #666;
-          line-height: 1.6;
-        }
-
-        /* ===== CTA SECTION ===== */
         .cta-section {
-          position: relative;
-          z-index: 10;
-          padding: 100px 40px;
-          text-align: center;
-          max-width: 900px;
-          margin: 0 auto;
+          position: relative; z-index: 10;
+          padding: 100px 40px; text-align: center;
+          max-width: 900px; margin: 0 auto;
         }
 
         .cta-title {
           font-family: 'Syne', sans-serif;
-          font-size: clamp(36px, 6vw, 56px);
-          font-weight: 700;
-          color: #1a1209;
-          margin-bottom: 28px;
-          line-height: 1.15;
-          animation: fadeInUp 0.8s ease-out;
-          letter-spacing: -0.01em;
+          font-size: clamp(30px, 6vw, 56px);
+          font-weight: 700; color: #1a1209;
+          margin-bottom: 28px; line-height: 1.15;
+          animation: fadeInUp 0.8s ease-out; letter-spacing: -0.01em;
         }
 
         .cta-desc {
-          font-size: 18px;
-          color: #666;
-          margin-bottom: 40px;
-          line-height: 1.7;
+          font-size: 18px; color: #666;
+          margin-bottom: 40px; line-height: 1.7;
           animation: fadeInUp 0.8s ease-out 0.1s both;
         }
 
         .cta-buttons {
-          display: flex;
-          gap: 18px;
-          justify-content: center;
-          flex-wrap: wrap;
+          display: flex; gap: 18px;
+          justify-content: center; flex-wrap: wrap;
           animation: fadeInUp 0.8s ease-out 0.2s both;
         }
 
-        /* ===== FOOTER ===== */
+        .btn-primary {
+          padding: 20px 44px;
+          background: linear-gradient(135deg, #c9a84c, #a67c30);
+          color: #fff; border: none; border-radius: 16px;
+          font-weight: 700; font-size: 16px; text-decoration: none;
+          display: inline-flex; align-items: center; gap: 10px;
+          cursor: pointer; transition: all 0.3s cubic-bezier(0.77, 0, 0.175, 1);
+          box-shadow: 0 12px 36px rgba(201, 168, 76, 0.3);
+          font-family: 'Inter', sans-serif; position: relative; overflow: hidden;
+        }
+
+        .btn-primary::before {
+          content: ''; position: absolute;
+          top: 0; left: -100%; width: 100%; height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+          transition: left 0.5s ease;
+        }
+
+        .btn-primary:hover::before { left: 100%; }
+        .btn-primary:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 20px 50px rgba(201, 168, 76, 0.4);
+        }
+
+        .btn-secondary {
+          padding: 20px 44px; background: transparent;
+          color: #1a1209; border: 2px solid rgba(201, 168, 76, 0.4);
+          border-radius: 16px; font-weight: 700; font-size: 16px;
+          text-decoration: none; display: inline-flex; align-items: center; gap: 10px;
+          cursor: pointer; transition: all 0.3s ease;
+          font-family: 'Inter', sans-serif; position: relative;
+        }
+
+        .btn-secondary:hover {
+          border-color: #c9a84c;
+          background: rgba(201, 168, 76, 0.08);
+          transform: translateY(-5px);
+          box-shadow: 0 10px 30px rgba(201, 168, 76, 0.15);
+        }
+
         .footer {
-          position: relative;
-          z-index: 10;
+          position: relative; z-index: 10;
           padding: 80px 40px 40px;
           background: rgba(250, 248, 245, 0.5);
           border-top: 1px solid rgba(201, 168, 76, 0.15);
-          max-width: 1400px;
-          margin: 0 auto;
+          max-width: 1400px; margin: 0 auto;
         }
 
         .footer-content {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-          gap: 60px;
-          margin-bottom: 60px;
+          gap: 60px; margin-bottom: 60px;
           animation: fadeInUp 0.8s ease-out;
         }
 
         .footer-section h4 {
-          font-family: 'Syne', sans-serif;
-          font-size: 14px;
-          font-weight: 700;
-          color: #1a1209;
-          margin-bottom: 20px;
-          text-transform: uppercase;
-          letter-spacing: 0.08em;
+          font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700;
+          color: #1a1209; margin-bottom: 20px;
+          text-transform: uppercase; letter-spacing: 0.08em;
         }
 
         .footer-link {
-          display: block;
-          color: #666;
-          text-decoration: none;
-          font-size: 14px;
-          margin-bottom: 12px;
-          transition: all 0.3s ease;
+          display: block; color: #666; text-decoration: none;
+          font-size: 14px; margin-bottom: 12px; transition: all 0.3s ease;
         }
 
-        .footer-link:hover {
-          color: #c9a84c;
-          transform: translateX(4px);
-        }
+        .footer-link:hover { color: #c9a84c; transform: translateX(4px); }
 
         .footer-bottom {
           border-top: 1px solid rgba(201, 168, 76, 0.15);
           padding-top: 40px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          flex-wrap: wrap;
-          gap: 20px;
-          color: #999;
-          font-size: 13px;
+          display: flex; justify-content: space-between;
+          align-items: center; flex-wrap: wrap;
+          gap: 20px; color: #999; font-size: 13px;
         }
 
-        /* ===== RESPONSIVE ===== */
+        /* ===== MOBILE FIXES ===== */
         @media (max-width: 768px) {
-          .header-content {
-            gap: 20px;
+          .header { padding: 16px 20px; }
+          .header-content { gap: 12px; }
+          .nav { gap: 12px; }
+          .nav-link { font-size: 13px; }
+          .btn-header { padding: 10px 16px; font-size: 13px; }
+
+          .hero { padding: 60px 20px; min-height: auto; }
+
+          .features, .how-section, .cta-section { padding: 60px 20px; }
+
+          .stats { padding: 60px 20px; margin: 0 20px; border-radius: 16px; }
+
+          .features-grid, .steps-grid { grid-template-columns: 1fr; }
+
+          .feature-card, .step-card { padding: 28px 20px; }
+
+          .cta-buttons { flex-direction: column; }
+
+          .btn-primary, .btn-secondary {
+            width: 100%; justify-content: center; padding: 16px 24px;
           }
 
-          .nav {
-            gap: 16px;
-          }
+          .footer { padding: 60px 20px 40px; margin: 0; }
 
-          .nav-link {
-            font-size: 14px;
-          }
+          .footer-content { grid-template-columns: 1fr 1fr; gap: 32px; }
 
-          .hero {
-            padding: 60px 20px;
-          }
+          .footer-bottom { flex-direction: column; justify-content: center; text-align: center; }
 
-          .features,
-          .how-section,
-          .cta-section {
-            padding: 80px 20px;
-          }
-
-          .features-grid,
-          .steps-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .feature-card,
-          .step-card {
-            padding: 32px 24px;
-          }
-
-          .cta-buttons {
-            flex-direction: column;
-          }
-
-          .btn-primary,
-          .btn-secondary {
-            width: 100%;
-            justify-content: center;
-          }
-
-          .footer-content {
-            grid-template-columns: 1fr;
-            gap: 40px;
-          }
-
-          .footer-bottom {
-            flex-direction: column;
-            justify-content: center;
-            text-align: center;
-          }
+          .orb-1, .orb-2, .orb-3 { display: none; }
         }
       `}</style>
 
       <div ref={containerRef} className="relative w-full">
-        {/* Floating Orbs */}
         <div className="orb orb-1"></div>
         <div className="orb orb-2"></div>
         <div className="orb orb-3"></div>
 
-        {/* Header */}
         <header className="header">
           <div className="header-content">
             <Link href="/" className="logo">
@@ -927,12 +616,9 @@ export default function LandingPage() {
           </div>
         </header>
 
-        {/* Hero Section */}
         <section className="hero">
           <div className="hero-content">
-            <div className="hero-badge">
-              Trusted by freelancers & clients
-            </div>
+            <div className="hero-badge">Trusted by freelancers & clients</div>
             <h1 className="hero-title">
               <span className="accent">The trust infrastructure</span> for freelance work
             </h1>
@@ -940,17 +626,12 @@ export default function LandingPage() {
               Secure escrow payments that give freelancers peace of mind and clients confidence. Get paid on time, every time.
             </p>
             <div className="hero-cta">
-              <Link href="/signup" className="btn-primary">
-                Get Started
-              </Link>
-              <Link href="#features" className="btn-secondary">
-                Learn More
-              </Link>
+              <Link href="/signup" className="btn-primary">Get Started</Link>
+              <Link href="#features" className="btn-secondary">Learn More</Link>
             </div>
           </div>
         </section>
 
-        {/* Features Section */}
         <section id="features" className="features">
           <div className="section-label">Why GigPay</div>
           <h2 className="section-title">Secure escrow payments for modern gig workers</h2>
@@ -978,7 +659,6 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Stats Section */}
         <section id="stats" className="stats">
           <div className="stats-grid">
             <div className="stat-item">
@@ -996,7 +676,6 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* How It Works */}
         <section id="how" className="how-section">
           <div className="section-label">The Process</div>
           <h2 className="section-title">Freelance payments, reinvented with trust</h2>
@@ -1024,23 +703,17 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* CTA Section */}
         <section id="cta" className="cta-section">
           <h2 className="cta-title">Africa&apos;s secure payment layer for freelancers</h2>
           <p className="cta-desc">
             GigPay helps freelancers work with confidence by securing client payments upfront and releasing funds instantly after work is delivered.
           </p>
           <div className="cta-buttons">
-            <Link href="/signup" className="btn-primary">
-              Start Earning Securely
-            </Link>
-            <Link href="/demo" className="btn-secondary">
-              Watch Demo
-            </Link>
+            <Link href="/signup" className="btn-primary">Start Earning Securely</Link>
+            <Link href="/demo" className="btn-secondary">Watch Demo</Link>
           </div>
         </section>
 
-        {/* Footer */}
         <footer className="footer">
           <div className="footer-content">
             <div className="footer-section">
