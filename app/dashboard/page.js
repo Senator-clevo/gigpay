@@ -100,10 +100,7 @@ export default function Dashboard() {
 
     console.log('Payout response:', data)
 
-    if (data.success) {
-      setJobs(jobs.map(j => j.id === selectedJobId ? { ...j, status: 'paid_out' } : j))
-    }
-  }
+    setJobs(jobs.map(j => j.id === selectedJobId ? { ...j, status: 'paid_out' } : j))
 
   const totalEarned = jobs
     .filter(j => j.status === 'paid_out')
@@ -481,23 +478,27 @@ export default function Dashboard() {
                 placeholder="••••"
                 autoFocus
               />
-              <div className="flex gap-3 mt-8">
-                <button className="flex-1 py-4 rounded-xl font-semibold border border-white/20 text-white bg-transparent"
-                  onClick={() => setShowPinModal(false)}>
-                  Cancel
-                </button>
-                <button 
-  style={{
-    flex: 1, padding: '18px 24px', borderRadius: '16px', fontWeight: 700,
-    fontSize: '16px', border: 'none', cursor: payoutLoading ? 'not-allowed' : 'pointer',
-    background: 'linear-gradient(135deg, #C9A84C 0%, #A67C30 100%)',
-    color: '#1a1209', boxShadow: '0 8px 24px rgba(201,168,76,0.4)',
-    opacity: payoutLoading ? 0.7 : 1
-  }}
-  onClick={confirmPayout} disabled={payoutLoading}>
-  {payoutLoading ? '⏳ Processing...' : '✅ Confirm Payout'}
-</button>
-              </div>
+              <div style={{ display: 'flex', gap: '12px', marginTop: '32px' }}>
+  <button
+    style={{
+      flex: 1, padding: '14px', borderRadius: '14px', fontWeight: 500,
+      fontSize: '14px', border: '1px solid rgba(255,255,255,0.15)',
+      background: 'transparent', color: 'rgba(255,255,255,0.7)', cursor: 'pointer'
+    }}
+    onClick={() => setShowPinModal(false)}>
+    Cancel
+  </button>
+  <button
+    style={{
+      flex: 1, padding: '14px', borderRadius: '14px', fontWeight: 600,
+      fontSize: '14px', border: 'none', cursor: payoutLoading ? 'not-allowed' : 'pointer',
+      background: 'linear-gradient(135deg, #C9A84C 0%, #A67C30 100%)',
+      color: '#1a1209', opacity: payoutLoading ? 0.7 : 1
+    }}
+    onClick={confirmPayout} disabled={payoutLoading}>
+    {payoutLoading ? 'Processing...' : 'Confirm Payout'}
+  </button>
+</div>
             </div>
           </div>
         )}
