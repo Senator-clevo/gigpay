@@ -427,7 +427,7 @@ export default function Dashboard() {
             ) : (
               <div className="space-y-4">
                 {jobs.map(job => (
-                  <div key={job.id} className="gp-job-card">
+                  <div key={job.id} className="gp-job-card" onClick={() => router.push(`/jobs/${job.id}`)} style={{ cursor: 'pointer' }}>
                     <div className="flex items-start justify-between mb-4">
                       <div>
                         <div className="gp-job-title">{job.title}</div>
