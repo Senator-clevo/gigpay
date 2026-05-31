@@ -14,33 +14,45 @@ function PayoutCallbackInner() {
     const statusParam = searchParams.get('status')
 
     async function handleCallback() {
-      if (!reference) {
-        setStatus('error')
-        setMessage('No payment reference found')
-        return
-      }
+  if (!reference) {
+    setStatus('error')
+    setMessage('No payment reference found')
+    return
+  }
 
-      if (statusParam === 'success' || statusParam === 'successful') {
-        // Find job by reference and update status
-        const jobId = reference.split('_')[0]
-        const { error } = await supabase
-          .from('jobs')
-          .update({ status: 'funded' })
-          .eq('id', jobId)
+  if (statusParam === 'success' || statusParam === 'successful') {
+    // reference is like "gig_1234567890" — look up by payaza_reference, not id
+    const { data: job, error } = await supabase
+      .from('jobs')
+      .select('id')
+      .eq('payaza_reference', reference)
+      .single()
 
-        if (error) {
-          console.error('Update error:', error)
-          setStatus('error')
-          setMessage('Payment received but status update failed. Contact support.')
-        } else {
-          setStatus('success')
-          setMessage('Payment confirmed and secured in escrow!')
-        }
-      } else {
-        setStatus('error')
-        setMessage('Payment was not completed. Please try again.')
-      }
+    if (error || !job) {
+      console.error('Job lookup error:', error)
+      setStatus('error')
+      setMessage('Payment received but we could not find your job. Contact support.')
+      return
     }
+
+    const { error: updateError } = await supabase
+      .from('jobs')
+      .update({ status: 'funded' })
+      .eq('id', job.id)
+
+    if (updateError) {
+      console.error('Update error:', updateError)
+      setStatus('error')
+      setMessage('Payment received but status update failed. Contact support.')
+    } else {
+      setStatus('success')
+      setMessage('Payment confirmed and secured in escrow!')
+    }
+  } else {
+    setStatus('error')
+    setMessage('Payment was not completed. Please try again.')
+  }
+}
 
     handleCallback()
   }, [])

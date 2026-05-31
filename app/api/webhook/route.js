@@ -5,19 +5,41 @@ export async function POST(request) {
   try {
     const body = await request.json()
     console.log('Webhook received:', JSON.stringify(body))
-
     const supabase = createServerSupabase()
 
     const reference =
       body?.merchant_reference ||
       body?.transaction_reference ||
+      body?.reference ||
       null
 
     const status = body?.status || body?.transaction_status || null
+    const event = body?.event || null
 
-    console.log('Reference:', reference, 'Status:', status)
+    console.log('Reference:', reference, 'Status:', status, 'Event:', event)
 
-    if (reference && (status === 'Completed' || status === 'Funds Received')) {
+    const successStatuses = [
+      'Completed',
+      'Funds Received',
+      'TRANSACTION_COMPLETED',
+      'TRANSACTION_SETTLED',
+      'NIP_SUCCESS',
+      'successful',
+      'success'
+    ]
+
+    const successEvents = [
+      'charge.success',
+      'payment.success',
+      'virtual_account.credit',
+      'collection.success'
+    ]
+
+    const isSuccess =
+      (status && successStatuses.includes(status)) ||
+      (event && successEvents.includes(event))
+
+    if (reference && isSuccess) {
       const { data: job } = await supabase
         .from('jobs')
         .select('*')
